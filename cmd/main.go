@@ -1,1 +1,4 @@
 package cmd
+
+func main() {
+}

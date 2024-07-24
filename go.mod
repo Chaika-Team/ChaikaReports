@@ -3,6 +3,7 @@ module ChaikaReports
 go 1.22.5
 
 require (
+	github.com/go-kit/kit v0.13.0 // indirect
 	github.com/gocql/gocql v1.6.0 // indirect
 	github.com/golang/snappy v0.0.3 // indirect
 	github.com/hailocab/go-hostpool v0.0.0-20160125115350-e80d13ce29ed // indirect
