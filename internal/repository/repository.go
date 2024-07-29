@@ -7,4 +7,5 @@ type SalesRepository interface {
 	GetActionsByConductor(tripID, conductorID int) ([]models.Action, error)
 	UpdateActionCount(tripID, carriageID, conductorID, productID, operationTypeID, newCount int) error
 	DeleteActions(tripID, conductorID int) error
+	GetConductorsByTripID(tripID int) ([]models.SalesData, error)
 }

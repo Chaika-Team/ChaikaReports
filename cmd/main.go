@@ -1,40 +1,31 @@
 package main
 
 import (
+	"ChaikaReports/internal/models"
+	"ChaikaReports/internal/repository/cassandra"
 	"fmt"
-	"github.com/gocql/gocql"
-	"log"
-	"time"
 )
+import "ChaikaReports/internal/config"
 
 func main() {
-	// Initialize the cluster
-	cluster := gocql.NewCluster("188.242.205.5")
-	cluster.Port = 9042
-	cluster.Keyspace = "system"
-	cluster.Consistency = gocql.Quorum
+	cnfg := config.LoadConfig()
+	cassandra.InitCassandra(
+		cnfg.Cassandra.Keyspace,
+		cnfg.Cassandra.Hosts,
+		cnfg.Cassandra.User,
+		cnfg.Cassandra.Password,
+	)
 
-	// Add authentication if needed
-	cluster.Authenticator = gocql.PasswordAuthenticator{
-		Username: "grisha",
-		Password: "n*_irR#2*$h_341nUe",
+	r := cassandra.NewSalesRepository()
+	salesData := &models.SalesData{
+		TripID:      2,
+		CarriageID:  101,
+		ConductorID: 1003,
+		Actions: []models.Action{
+			{ProductID: 1, OperationTypeID: 1, Count: 10},
+			{ProductID: 2, OperationTypeID: 2, Count: 20},
+		},
 	}
+	fmt.Println(r.GetActionsByConductor(salesData.TripID, salesData.ConductorID))
 
-	// Adjust timeouts
-	cluster.ConnectTimeout = 10 * time.Second
-	cluster.Timeout = 10 * time.Second
-
-	// Create a session
-	session, err := cluster.CreateSession()
-	if err != nil {
-		log.Fatalf("Failed to connect to the cluster: %v", err)
-	}
-	defer session.Close()
-
-	// Execute a simple query to test the connection
-	var clusterName string
-	if err := session.Query(`SELECT cluster_name FROM system.local`).Scan(&clusterName); err != nil {
-		log.Fatalf("Query failed: %v", err)
-	}
-	fmt.Printf("Cluster Name: %s\n", clusterName)
 }
