@@ -14,14 +14,14 @@ func NewSalesRepository() repository.SalesRepository {
 func (r *SalesRepository) InsertSalesData(salesData *models.SalesData) error {
 	// Insert into sales_data table
 	if err := Session.Query(`INSERT INTO sales_data (trip_id, carriage_id, conductor_id) VALUES (?, ?, ?)`,
-		salesData.TripID, salesData.CarriageID, salesData.ConductorID).Exec(); err != nil {
+		&salesData.TripID, &salesData.CarriageID, &salesData.ConductorID).Exec(); err != nil {
 		return err
 	}
 
 	// Insert into actions table
 	for _, action := range salesData.Actions {
 		if err := Session.Query(`INSERT INTO actions (trip_id, carriage_id, conductor_id, product_id, operation_type_id, count) VALUES (?, ?, ?, ?, ?, ?)`,
-			salesData.TripID, salesData.CarriageID, salesData.ConductorID, action.ProductID, action.OperationTypeID, action.Count).Exec(); err != nil {
+			&salesData.TripID, &salesData.CarriageID, &salesData.ConductorID, &action.ProductID, &action.OperationTypeID, &action.Count).Exec(); err != nil { //TODO add "&"
 			return err
 		}
 	}
@@ -30,7 +30,7 @@ func (r *SalesRepository) InsertSalesData(salesData *models.SalesData) error {
 
 func (r *SalesRepository) GetActionsByConductor(tripID, conductorID int) ([]models.Action, error) {
 	var actions []models.Action
-	iter := Session.Query(`SELECT product_id, operation_type_id, count FROM actions WHERE trip_id = ? AND conductor_id = ? ALLOW FILTERING`,
+	iter := Session.Query(`SELECT product_id, operation_type_id, count FROM actions WHERE trip_id = ? AND conductor_id = ?`,
 		tripID, conductorID).Iter()
 
 	var action models.Action
@@ -48,7 +48,7 @@ func (r *SalesRepository) GetConductorsByTripID(tripID int) ([]models.SalesData,
 	iter := Session.Query(`SELECT trip_id, carriage_id, conductor_id FROM sales_data WHERE trip_id = ?`, tripID).Iter()
 
 	var salesData models.SalesData
-	for iter.Scan(&salesData.TripID, &salesData.CarriageID, &salesData.ConductorID) {
+	for iter.Scan(salesData.TripID, salesData.CarriageID, salesData.ConductorID) {
 		// Retrieve actions for each conductor in the trip
 		actions, err := r.GetActionsByConductor(tripID, salesData.ConductorID)
 		if err != nil {
