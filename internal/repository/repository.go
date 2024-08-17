@@ -2,13 +2,12 @@ package repository
 
 import (
 	"ChaikaReports/internal/models"
-	"github.com/gocql/gocql"
 )
 
 type SalesRepository interface {
 	InsertData(salesData *models.SalesData) error
-	GetActionsByConductor(routeID, tripID, conductorID int) ([]models.Action, error)
-	UpdateActionCount(operationID gocql.UUID, routeID, tripID, productID, newCount int) error
-	DeleteProductFromAction(operationID gocql.UUID, routeID, tripID, conductorID, productID int) error
-	GetConductorsByTripID(routeID, tripID int) ([]models.SalesData, error)
+	GetActionsByConductor(salesData *models.SalesData) ([]models.Action, error)
+	UpdateActionCount(salesData *models.SalesData, action *models.Action) error
+	DeleteProductFromAction(salesData *models.SalesData, action *models.Action) error
+	GetConductorsByTripID(salesData *models.SalesData) ([]models.SalesData, error)
 }

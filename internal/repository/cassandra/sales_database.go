@@ -3,7 +3,6 @@ package cassandra
 import (
 	"ChaikaReports/internal/models"
 	"ChaikaReports/internal/repository"
-	"github.com/gocql/gocql"
 )
 
 type SalesRepository struct{}
@@ -22,10 +21,10 @@ func (r *SalesRepository) InsertData(salesData *models.SalesData) error {
 	return nil
 }
 
-func (r *SalesRepository) GetActionsByConductor(routeID, tripID, conductorID int) ([]models.Action, error) {
+func (r *SalesRepository) GetActionsByConductor(salesData *models.SalesData) ([]models.Action, error) {
 	var actions []models.Action
 	iter := Session.Query(`SELECT product_id, operation_type_id, count, operation_time, operation_amount, operation_id FROM actions WHERE route_id = ? AND trip_id = ? AND conductor_id = ?`,
-		routeID, tripID, conductorID).Iter()
+		&salesData.RouteID, &salesData.TripID, &salesData.ConductorID).Iter()
 
 	var action models.Action
 	for iter.Scan(&action.ProductID, &action.OperationTypeID, &action.Count, &action.OperationTime, &action.OperationAmount, &action.OperationID) {
@@ -37,10 +36,10 @@ func (r *SalesRepository) GetActionsByConductor(routeID, tripID, conductorID int
 	return actions, nil
 }
 
-func (r *SalesRepository) GetConductorsByTripID(routeID, tripID int) ([]models.SalesData, error) {
+func (r *SalesRepository) GetConductorsByTripID(salesData *models.SalesData) ([]models.SalesData, error) {
 	var conductors []models.SalesData
 	iter := Session.Query(`SELECT conductor_id FROM actions WHERE route_id = ? AND trip_id = ?`,
-		routeID, tripID).Iter()
+		&salesData.RouteID, &salesData.TripID).Iter()
 
 	var conductor models.SalesData
 	for iter.Scan(&conductor.ConductorID) {
@@ -52,11 +51,12 @@ func (r *SalesRepository) GetConductorsByTripID(routeID, tripID int) ([]models.S
 	return conductors, nil
 }
 
-func (r *SalesRepository) UpdateActionCount(operationID gocql.UUID, routeID, tripID, productID, newCount int) error {
+func (r *SalesRepository) UpdateActionCount(salesData *models.SalesData, action *models.Action) error {
 	return Session.Query(`UPDATE actions SET count = ? WHERE route_id = ? AND trip_id = ? AND operation_id = ? AND product_id = ?`,
-		newCount, routeID, tripID, operationID, productID).Exec()
+		&action.Count, &salesData.RouteID, &salesData.TripID, &action.OperationID, &action.ProductID).Exec()
 }
 
-func (r *SalesRepository) DeleteProductFromAction(operationID gocql.UUID, routeID, tripID, conductorID, productID int) error {
-	return Session.Query(`DELETE FROM actions WHERE route_id = ? AND trip_id = ? AND conductor_id = ? AND operation_id = ? AND product_id = ?`, routeID, tripID, conductorID, operationID, productID).Exec()
+func (r *SalesRepository) DeleteProductFromAction(salesData *models.SalesData, action *models.Action) error {
+	return Session.Query(`DELETE FROM actions WHERE route_id = ? AND trip_id = ? AND conductor_id = ? AND operation_id = ? AND product_id = ?`,
+		&salesData.RouteID, &salesData.TripID, &salesData.ConductorID, &action.OperationID, &action.ProductID).Exec()
 }
