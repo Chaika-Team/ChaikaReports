@@ -1,6 +1,6 @@
 cassandra:
   hosts:
     - "188.242.205.5"
-  keyspace: "sales_tracking"
+  keyspace: "chaika_sales"
   user: "grisha"
   password: "n*_irR#2*$h_341nUe"
