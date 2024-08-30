@@ -3,6 +3,7 @@ package cassandra
 import (
 	"ChaikaReports/internal/models"
 	"ChaikaReports/internal/repository"
+	"ChaikaReports/utils"
 )
 
 type SalesRepository struct{}
@@ -14,7 +15,7 @@ func NewSalesRepository() repository.SalesRepository {
 func (r *SalesRepository) InsertData(salesData *models.SalesData) error {
 	for _, action := range salesData.Actions {
 		if err := Session.Query(`INSERT INTO actions (route_id, operation_time, carriage_id, conductor_id, count, operation_amount, operation_id, operation_type_id, product_id, trip_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-			&salesData.RouteID, &action.OperationTime, &salesData.CarriageID, &salesData.ConductorID, &action.Count, &action.OperationAmount, &action.OperationID, &action.OperationTypeID, &action.ProductID, &salesData.TripID).Exec(); err != nil {
+			&salesData.RouteID, &action.OperationTime, &salesData.CarriageID, &salesData.ConductorID, &action.Count, &action.OperationAmount, utils.GenerateUUID(), &action.OperationTypeID, &action.ProductID, &salesData.TripID).Exec(); err != nil {
 			return err
 		}
 	}
