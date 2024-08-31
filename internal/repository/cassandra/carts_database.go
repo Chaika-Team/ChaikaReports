@@ -11,7 +11,7 @@ func NewSalesRepository() repository.SalesRepository {
 	return &SalesRepository{}
 }
 
-func (r *SalesRepository) InsertData() error {
+func (r *SalesRepository) InsertData(operations models.Operations) error {
 
 }
 
