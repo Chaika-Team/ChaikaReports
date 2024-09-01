@@ -3,8 +3,9 @@ package models
 import "time"
 
 type Item struct {
-	ProductID int   `json:"productID"`
-	Quantity  int16 `json:"quantity"`
+	ProductID int     `json:"productID"`
+	Quantity  int16   `json:"quantity"`
+	Price     float64 `json:"price"`
 }
 
 type Cart struct {
@@ -14,7 +15,7 @@ type Cart struct {
 	Items         []Item
 }
 
-type Operation struct {
+type CarriageReport struct {
 	RouteID     string    `json:"routeID"`
 	StartTime   time.Time `json:"startTime"`
 	EndTime     time.Time `json:"endTime"`
