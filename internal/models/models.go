@@ -3,22 +3,30 @@ package models
 import "time"
 
 type Item struct {
-	ProductID int     `json:"productID"`
+	ProductID int     `json:"product_id"`
 	Quantity  int16   `json:"quantity"`
 	Price     float64 `json:"price"`
 }
 
 type Cart struct {
-	EmployeeID    int       `json:"employeeID"`
-	OperationType int8      `json:"operationType"`
-	OperationTime time.Time `json:"operationTime"`
-	Items         []Item
+	CartID        CartID `json:"cart_id"`
+	OperationType int8   `json:"operation_type"`
+	Items         []Item `json:"items"`
 }
 
-type CarriageReport struct {
-	RouteID     string    `json:"routeID"`
-	StartTime   time.Time `json:"startTime"`
-	EndTime     time.Time `json:"endTime"`
-	CarriageNum int8      `json:"carriageNum"`
+type Carriage struct {
+	TripID      TripID    `json:"trip_id"`
+	EndTime     time.Time `json:"end_time"`
+	CarriageNum int8      `json:"carriage_num"`
 	Carts       []Cart    `json:"carts"`
+}
+
+type TripID struct {
+	RouteID   string    `json:"route_id"`
+	StartTime time.Time `json:"start_time"`
+}
+
+type CartID struct {
+	EmployeeID    string    `json:"employee_id"`
+	OperationTime time.Time `json:"operation_time"`
 }
