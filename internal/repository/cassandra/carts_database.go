@@ -43,11 +43,10 @@ func (r *SalesRepository) InsertData(carriageReport *models.Carriage) error {
 
 // Gets all carts employee has sold during trip, returns array of Carts
 func (r *SalesRepository) GetEmployeeCartsInTrip(tripID *models.TripID, employeeID *string) ([]models.Cart, error) {
-	iter := Session.Query(`SELECT operation_time, operation_type, product_id, quantity, price FROM operations WHERE route_id = ? AND start_time = ? AND employee_id = ?`,
-		&tripID.RouteID, &tripID.StartTime, &employeeID).Iter()
+	var queryText = `SELECT operation_time, operation_type, product_id, quantity, price FROM operations WHERE route_id = ? AND start_time = ? AND employee_id = ?`
+	iter := Session.Query(queryText, &tripID.RouteID, &tripID.StartTime, &employeeID).Iter()
 	// Uses helper function to convert query result into slice of models.Cart
 	var carts, _ = aggregateCartsFromRows(iter, *employeeID) //TODO add error handling and logging
-
 	if err := iter.Close(); err != nil {
 		return nil, err
 	}
@@ -57,9 +56,8 @@ func (r *SalesRepository) GetEmployeeCartsInTrip(tripID *models.TripID, employee
 
 // Gets all employees by TripID (RouteID, StartTime)
 func (r *SalesRepository) GetEmployeeIDsByTrip(tripID *models.TripID) ([]string, error) {
-	iter := Session.Query(`SELECT employee_id FROM operations WHERE route_id = ? AND start_time = ?`,
-		&tripID.RouteID, &tripID.StartTime).Iter()
-
+	var queryText = `SELECT employee_id FROM operations WHERE route_id = ? AND start_time = ?`
+	iter := Session.Query(queryText, &tripID.RouteID, &tripID.StartTime).Iter()
 	var employeeIDs []string
 	var employeeID string
 	for iter.Scan(&employeeID) {
@@ -75,18 +73,18 @@ func (r *SalesRepository) GetEmployeeIDsByTrip(tripID *models.TripID) ([]string,
 
 // Updates quantity of items in cart
 func (r *SalesRepository) UpdateItemQuantity(tripID *models.TripID, cartID *models.CartID, productID int, newQuantity *int16) error {
-	return Session.Query(`UPDATE operations SET quantity = ? WHERE route_id = ? AND start_time = ? AND employee_id = ? AND operation_time = ? AND product_id = ?`,
-		newQuantity, tripID.RouteID, tripID.StartTime, cartID.EmployeeID, cartID.OperationTime, productID).Exec()
+	var queryText = `UPDATE operations SET quantity = ? WHERE route_id = ? AND start_time = ? AND employee_id = ? AND operation_time = ? AND product_id = ?`
+	return Session.Query(queryText, newQuantity, tripID.RouteID, tripID.StartTime, cartID.EmployeeID, cartID.OperationTime, productID).Exec()
 }
 
 // Deletes cart item (operation)
 func (r *SalesRepository) DeleteItemFromCart(tripID *models.TripID, cartID *models.CartID, productID int) error {
-	return Session.Query(`DELETE FROM operations WHERE route_id = ? AND start_time = ? AND employee_id = ? AND operation_time = ? AND product_id = ?`,
-		tripID.RouteID, tripID.StartTime, cartID.EmployeeID, cartID.OperationTime, productID).Exec()
+	var queryText = `DELETE FROM operations WHERE route_id = ? AND start_time = ? AND employee_id = ? AND operation_time = ? AND product_id = ?`
+	return Session.Query(queryText, tripID.RouteID, tripID.StartTime, cartID.EmployeeID, cartID.OperationTime, productID).Exec()
 }
 
 // Helper function to process rows and return an array of Carts
-func aggregateCartsFromRows(iter *gocql.Iter, employeeID string) ([]models.Cart, error) {
+func aggregateCartsFromRows(iter *gocql.Iter, employeeID string) ([]models.Cart, error) { //TODO Divide function into sub functions for checking and inserting into map
 	cartMap := make(map[string]*models.Cart)
 
 	var operationTime time.Time
