@@ -14,7 +14,7 @@ func NewSalesRepository() repository.SalesRepository {
 	return &SalesRepository{}
 }
 
-// Inserts all data from a Carriage into the Cassandra database
+// InsertData Inserts all data from a Carriage into the Cassandra database
 func (r *SalesRepository) InsertData(carriageReport *models.Carriage) error {
 	for _, cart := range carriageReport.Carts {
 		for _, item := range cart.Items {
@@ -41,7 +41,7 @@ func (r *SalesRepository) InsertData(carriageReport *models.Carriage) error {
 	return nil
 }
 
-// Gets all carts employee has sold during trip, returns array of Carts
+// GetEmployeeCartsInTrip Gets all carts employee has sold during trip, returns array of Carts
 func (r *SalesRepository) GetEmployeeCartsInTrip(tripID *models.TripID, employeeID *string) ([]models.Cart, error) {
 	var queryText = `SELECT operation_time, operation_type, product_id, quantity, price FROM operations WHERE route_id = ? AND start_time = ? AND employee_id = ?`
 	iter := Session.Query(queryText, &tripID.RouteID, &tripID.StartTime, &employeeID).Iter()
@@ -54,7 +54,7 @@ func (r *SalesRepository) GetEmployeeCartsInTrip(tripID *models.TripID, employee
 	return carts, nil
 }
 
-// Gets all employees by TripID (RouteID, StartTime)
+// GetEmployeeIDsByTrip Gets all employees by TripID (RouteID, StartTime)
 func (r *SalesRepository) GetEmployeeIDsByTrip(tripID *models.TripID) ([]string, error) {
 	var queryText = `SELECT employee_id FROM operations WHERE route_id = ? AND start_time = ?`
 	iter := Session.Query(queryText, &tripID.RouteID, &tripID.StartTime).Iter()
@@ -71,13 +71,13 @@ func (r *SalesRepository) GetEmployeeIDsByTrip(tripID *models.TripID) ([]string,
 	return employeeIDs, nil
 }
 
-// Updates quantity of items in cart
+// UpdateItemQuantity Updates quantity of items in cart
 func (r *SalesRepository) UpdateItemQuantity(tripID *models.TripID, cartID *models.CartID, productID int, newQuantity *int16) error {
 	var queryText = `UPDATE operations SET quantity = ? WHERE route_id = ? AND start_time = ? AND employee_id = ? AND operation_time = ? AND product_id = ?`
 	return Session.Query(queryText, newQuantity, tripID.RouteID, tripID.StartTime, cartID.EmployeeID, cartID.OperationTime, productID).Exec()
 }
 
-// Deletes cart item (operation)
+// DeleteItemFromCart Deletes cart item (operation)
 func (r *SalesRepository) DeleteItemFromCart(tripID *models.TripID, cartID *models.CartID, productID int) error {
 	var queryText = `DELETE FROM operations WHERE route_id = ? AND start_time = ? AND employee_id = ? AND operation_time = ? AND product_id = ?`
 	return Session.Query(queryText, tripID.RouteID, tripID.StartTime, cartID.EmployeeID, cartID.OperationTime, productID).Exec()
