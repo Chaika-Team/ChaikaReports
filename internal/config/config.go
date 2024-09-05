@@ -7,14 +7,15 @@ import (
 )
 
 type StorageConfig struct {
-	Hosts    []string
-	Keyspace string
-	User     string
-	Password string
+	Hosts    []string `mapstructure:"hosts"`
+	Keyspace string   `mapstructure:"keyspace"`
+	User     string   `mapstructure:"user"`
+	Password string   `mapstructure:"password"`
 }
 
 type Config struct {
-	Cassandra StorageConfig
+	Cassandra     StorageConfig `mapstructure:"cassandra"`
+	CassandraTest StorageConfig `mapstructure:"cassandra-test"`
 }
 
 func LoadConfig() *Config {
