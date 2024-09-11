@@ -3,9 +3,11 @@ package test
 import (
 	"ChaikaReports/internal/config"
 	"ChaikaReports/internal/repository/cassandra"
+	"github.com/go-kit/log"
 	"github.com/gocql/gocql"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	"os"
 )
 
 type CassandraTestSuite struct {
@@ -17,9 +19,9 @@ type CassandraTestSuite struct {
 func (suite *CassandraTestSuite) SetupSuite() {
 	// Load the configuration
 	cfg := config.LoadConfig()
-
+	testLogger := log.NewLogfmtLogger(os.Stdout)
 	// Create the test keyspace
-	testSession, err := cassandra.InitCassandra(cfg.CassandraTest.Keyspace, cfg.CassandraTest.Hosts, cfg.CassandraTest.User, cfg.CassandraTest.Password)
+	testSession, err := cassandra.InitCassandra(testLogger, cfg.CassandraTest.Keyspace, cfg.CassandraTest.Hosts, cfg.CassandraTest.User, cfg.CassandraTest.Password)
 	assert.NoError(suite.T(), err, "Failed to connect to test keyspace")
 	suite.testSession = testSession
 
