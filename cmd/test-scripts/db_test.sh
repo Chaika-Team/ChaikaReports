@@ -2,8 +2,8 @@
 
 # Variables
 CASSANDRA_HOST="188.242.205.5"    # Your Cassandra host
-CASSANDRA_USER="grisha"           # Your Cassandra username
-CASSANDRA_PASS="n*_irR#2*$h_341nUe"  # Your Cassandra password
+CASSANDRA_USER=""           # Your Cassandra username
+CASSANDRA_PASS=""  # Your Cassandra password
 MAIN_KEYSPACE="chaika_sales"           # Main keyspace name
 TEST_KEYSPACE="chaika_sales_test"      # Test keyspace name
 TABLE_NAME="operations"                # Table name to copy
