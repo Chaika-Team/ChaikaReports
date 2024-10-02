@@ -2,6 +2,7 @@ package cassandra
 
 import (
 	"ChaikaReports/internal/models"
+	"context"
 	"fmt"
 	"github.com/go-kit/log"
 	"github.com/gocql/gocql"
@@ -22,18 +23,18 @@ func NewSalesRepository(session *gocql.Session, logger log.Logger) *SalesReposit
 }
 
 // InsertData Inserts all data from a Carriage into the Cassandra database
-func (r *SalesRepository) InsertData(carriageReport *models.Carriage) error {
-	batch := r.session.NewBatch(gocql.LoggedBatch)
+func (r *SalesRepository) InsertData(ctx context.Context, carriageReport *models.Carriage) error {
+	batch := r.session.NewBatch(gocql.LoggedBatch).WithContext(ctx)
 	for _, cart := range carriageReport.Carts {
 		for _, item := range cart.Items {
 			// Batch query allows to save data integrity by stopping transaction if at least one insertion fails
 			batch.Query(`
-				INSERT INTO operations (route_id, start_time, end_time, carriage_num, employee_id, operation_type, operation_time, product_id, quantity, price)
+				INSERT INTO operations (route_id, start_time, end_time, carriage_id, employee_id, operation_type, operation_time, product_id, quantity, price)
 				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 				&carriageReport.TripID.RouteID,
 				&carriageReport.TripID.StartTime,
 				&carriageReport.EndTime,
-				&carriageReport.CarriageNum,
+				&carriageReport.CarriageID,
 				&cart.CartID.EmployeeID,
 				&cart.OperationType,
 				&cart.CartID.OperationTime,
@@ -41,12 +42,11 @@ func (r *SalesRepository) InsertData(carriageReport *models.Carriage) error {
 				&item.Quantity,
 				&item.Price,
 			)
-
-			if err := r.session.ExecuteBatch(batch); err != nil {
-				_ = r.log.Log("error", fmt.Sprintf("Failed to insert carriage trip info %v", err))
-				return err
-			}
 		}
+	}
+	if err := r.session.ExecuteBatch(batch); err != nil {
+		_ = r.log.Log("error", fmt.Sprintf("Failed to insert carriage trip info %v", err))
+		return err
 	}
 	return nil
 }
@@ -119,7 +119,7 @@ func aggregateCartsFromRows(iter *gocql.Iter, employeeID string) ([]models.Cart,
 	var operationType int8
 	var productID int
 	var quantity int16
-	var price float64
+	var price float32
 
 	for iter.Scan(&operationTime, &operationType, &productID, &quantity, &price) {
 

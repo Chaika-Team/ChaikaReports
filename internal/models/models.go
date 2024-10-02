@@ -5,7 +5,7 @@ import "time"
 type Item struct {
 	ProductID int     `json:"product_id"`
 	Quantity  int16   `json:"quantity"`
-	Price     float64 `json:"price"`
+	Price     float32 `json:"price"`
 }
 
 type Cart struct {
@@ -15,10 +15,10 @@ type Cart struct {
 }
 
 type Carriage struct {
-	TripID      TripID    `json:"trip_id"`
-	EndTime     time.Time `json:"end_time"`
-	CarriageNum int8      `json:"carriage_num"`
-	Carts       []Cart    `json:"carts"`
+	TripID     TripID    `json:"trip_id"`
+	EndTime    time.Time `json:"end_time"`
+	CarriageID int8      `json:"carriage_id"`
+	Carts      []Cart    `json:"carts"`
 }
 
 type TripID struct {

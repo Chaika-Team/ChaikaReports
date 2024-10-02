@@ -1,4 +1,3 @@
-// internal/config/config.go
 package config
 
 import (
@@ -18,8 +17,8 @@ type Config struct {
 	CassandraTest StorageConfig `mapstructure:"cassandra-test"`
 }
 
-func LoadConfig() *Config {
-	viper.SetConfigFile("config.yml")
+func LoadConfig(configPath string) *Config {
+	viper.SetConfigFile(configPath)
 	if err := viper.ReadInConfig(); err != nil {
 		log.Fatalf("Error reading config file, %s", err)
 	}

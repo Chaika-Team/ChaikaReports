@@ -5,7 +5,7 @@ import (
 	"github.com/gocql/gocql"
 )
 
-func InitCassandra(logger log.Logger, keyspace string, hosts []string, username, password string) (*gocql.Session, error) {
+func InitCassandra(logger log.Logger, keyspace string, hosts []string, username, password string) (*gocql.Session, error) { //TODO Add connection retry
 	cluster := gocql.NewCluster(hosts...)
 	cluster.Keyspace = keyspace
 	cluster.Consistency = gocql.Quorum

@@ -3,10 +3,11 @@ package service
 import (
 	"ChaikaReports/internal/models"
 	"ChaikaReports/internal/repository"
+	"context"
 )
 
 type SalesService interface {
-	InsertData(carriageReport *models.Carriage) error
+	InsertData(ctx context.Context, carriageReport *models.Carriage) error
 	GetEmployeeCartsInTrip(tripID *models.TripID, employeeID *string) ([]models.Cart, error)
 	GetEmployeeIDsByTrip(tripID *models.TripID) ([]string, error)
 	UpdateItemQuantity(tripID *models.TripID, cartID *models.CartID, productID *int, newQuantity *int16) error
@@ -23,8 +24,8 @@ func NewSalesService(repo repository.SalesRepository) SalesService {
 }
 
 // InsertData Inserts incoming carriageReport data
-func (s *salesService) InsertData(carriageReport *models.Carriage) error {
-	return s.repo.InsertData(carriageReport)
+func (s *salesService) InsertData(ctx context.Context, carriageReport *models.Carriage) error {
+	return s.repo.InsertData(ctx, carriageReport)
 }
 
 // GetEmployeeCartsInTrip Gets all carts an employee made during trip
@@ -34,15 +35,15 @@ func (s *salesService) GetEmployeeCartsInTrip(tripID *models.TripID, employeeID 
 
 // GetEmployeeIDsByTrip Gets all employee ID's in trip
 func (s *salesService) GetEmployeeIDsByTrip(tripID *models.TripID) ([]string, error) {
-	return s.GetEmployeeIDsByTrip(tripID)
+	return s.repo.GetEmployeeIDsByTrip(tripID)
 }
 
 // UpdateItemQuantity Updates item quantity in cart
 func (s *salesService) UpdateItemQuantity(tripID *models.TripID, cartID *models.CartID, productID *int, newQuantity *int16) error {
-	return s.UpdateItemQuantity(tripID, cartID, productID, newQuantity)
+	return s.repo.UpdateItemQuantity(tripID, cartID, productID, newQuantity)
 }
 
 // DeleteItemFromCart Deletes item from cart
 func (s *salesService) DeleteItemFromCart(tripID *models.TripID, cartID *models.CartID, productID *int) error {
-	return s.DeleteItemFromCart(tripID, cartID, productID)
+	return s.repo.DeleteItemFromCart(tripID, cartID, productID)
 }
