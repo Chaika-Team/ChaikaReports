@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Variables
-CASSANDRA_HOST="188.242.205.5"    # Your Cassandra host
+CASSANDRA_HOST=""    # Your Cassandra host
 CASSANDRA_USER=""           # Your Cassandra username
 CASSANDRA_PASS=""  # Your Cassandra password
 MAIN_KEYSPACE="chaika_sales"           # Main keyspace name
