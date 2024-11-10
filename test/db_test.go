@@ -4,48 +4,44 @@ import (
 	"ChaikaReports/internal/config"
 	"ChaikaReports/internal/models"
 	"ChaikaReports/internal/repository/cassandra"
+	"context"
 	"github.com/go-kit/log"
 	"github.com/gocql/gocql"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/suite"
-	"golang.org/x/net/context"
 	"os"
 	"testing"
 	"time"
 )
 
-type CassandraTestSuite struct {
-	suite.Suite
-	Session      *gocql.Session
-	TestRepo     *cassandra.SalesRepository
-	TestKeyspace string
-	TestLogger   log.Logger
-	ctx          context.Context
-}
+var (
+	testSession *gocql.Session
+	testRepo    *cassandra.SalesRepository
+	ctx         context.Context
+)
 
-func (suite *CassandraTestSuite) SetupSuite() {
-	// Load the configuration
+func TestMain(m *testing.M) {
 	cfg := config.LoadConfig("C:/Users/Greg/GolandProjects/ChaikaReports/config.yml")
-	suite.TestLogger = log.NewLogfmtLogger(os.Stderr)
 
 	// Connect to the test keyspace
-	testSession, err := cassandra.InitCassandra(suite.TestLogger, cfg.CassandraTest.Keyspace, cfg.CassandraTest.Hosts, cfg.CassandraTest.User, cfg.CassandraTest.Password)
-	assert.NoError(suite.T(), err, "Failed to connect to test keyspace")
-	suite.Session = testSession
+	var err error
+	testSession, err = cassandra.InitCassandra(log.NewNopLogger(), cfg.CassandraTest.Keyspace, cfg.CassandraTest.Hosts, cfg.CassandraTest.User, cfg.CassandraTest.Password)
+	if err != nil {
+		panic("Failed to connect to test keyspace")
+	}
 
-	suite.TestKeyspace = cfg.CassandraTest.Keyspace
+	testRepo = cassandra.NewSalesRepository(testSession, log.NewNopLogger())
 
-	// Initialize the repository with the session and a simple logger
-	suite.TestRepo = cassandra.NewSalesRepository(suite.Session, suite.TestLogger)
+	code := m.Run()
+
+	testSession.Close()
+
+	// Exit with the code from m.Run
+	os.Exit(code)
 }
 
-func (suite *CassandraTestSuite) TearDownSuite() {
-	// Drop the table after tests
-	suite.Session.Close()
-}
-
-func (suite *CassandraTestSuite) TestInsert() {
-
+func TestInsert(t *testing.T) {
+	// Use testRepo to ensure it's referenced
+	assert.NotNil(t, testRepo, "testRepo should be initialized")
 	tripStartTime := time.Date(2023, 1, 15, 10, 0, 1, 0, time.UTC)
 
 	carriage := &models.Carriage{
@@ -119,21 +115,17 @@ func (suite *CassandraTestSuite) TestInsert() {
 		},
 	}
 
-	result := suite.TestRepo.InsertData(suite.ctx, carriage)
-	assert.NoError(suite.T(), result, "Failed to insert data")
+	result := testRepo.InsertData(ctx, carriage)
+	assert.NoError(t, result, "Failed to insert data")
 
 }
 
-func (suite *CassandraTestSuite) TestGetEmployeeCartsInTripTest() {
+func TestGetEmployeeCartsInTrip(t *testing.T) {
 	tripID := models.TripID{
 		RouteID:   "route-test",
 		StartTime: time.Date(2023, 1, 15, 10, 0, 1, 0, time.UTC)}
 	employeeID := "98765"
-	carts, err := suite.TestRepo.GetEmployeeCartsInTrip(&tripID, &employeeID)
-	assert.NoError(suite.T(), err, "Failed to get cart data for employee")
-	assert.Equal(suite.T(), 3, len(carts), "Expected 3 carts for employee")
-}
-
-func TestCassandraTestSuite(t *testing.T) {
-	suite.Run(t, new(CassandraTestSuite))
+	carts, err := testRepo.GetEmployeeCartsInTrip(&tripID, &employeeID)
+	assert.NoError(t, err, "Failed to get cart data for employee")
+	assert.Equal(t, 3, len(carts), "Expected 3 carts for employee")
 }
