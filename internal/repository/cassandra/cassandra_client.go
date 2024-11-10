@@ -22,14 +22,6 @@ func InitCassandra(logger log.Logger, keyspace string, hosts []string, username,
 		return nil, err
 	}
 
-	// Defer closing of session to make sure it gets closed
-	defer func() {
-		if r := recover(); r != nil {
-			_ = logger.Log("msg", "Recovered from panic during session", "error", r)
-			session.Close()
-		}
-	}()
-
 	// Performing simple health check for Cassandra DB connection
 	if err := session.Query("SELECT now() FROM system.local").Exec(); err != nil {
 		_ = logger.Log("msg", "Cassandra health check failed", "error", err)
