@@ -121,11 +121,86 @@ func TestInsert(t *testing.T) {
 }
 
 func TestGetEmployeeCartsInTrip(t *testing.T) {
+	// Define constants for test data
+	var (
+		testRouteID    = "route_test"
+		testEmployeeID = "98765"
+		testStartTime  = time.Date(2023, 1, 15, 10, 0, 1, 0, time.UTC)
+	)
+
+	// Define trip ID and employee ID
 	tripID := models.TripID{
-		RouteID:   "route-test",
-		StartTime: time.Date(2023, 1, 15, 10, 0, 1, 0, time.UTC)}
-	employeeID := "98765"
+		RouteID:   testRouteID,
+		StartTime: testStartTime,
+	}
+	employeeID := testEmployeeID
+
+	// Retrieve carts from the repository
 	carts, err := testRepo.GetEmployeeCartsInTrip(&tripID, &employeeID)
+
+	// Log the returned carts for debugging
+	t.Logf("Returned carts: %+v", carts)
+
+	// Assert no error occurred
 	assert.NoError(t, err, "Failed to get cart data for employee")
-	assert.Equal(t, 3, len(carts), "Expected 3 carts for employee")
+
+	// Assert the number of carts returned
+	expectedCartCount := 3
+	assert.Equal(t, expectedCartCount, len(carts), "Expected %d carts for employee %s", expectedCartCount, employeeID)
+
+	// Define the expected carts
+	expectedCarts := []models.Cart{
+		{
+			CartID: models.CartID{
+				EmployeeID:    "98765",
+				OperationTime: time.Date(2023, 1, 15, 12, 40, 0, 0, time.UTC),
+			},
+			OperationType: 1,
+			Items: []models.Item{
+				{ProductID: 6, Quantity: 1, Price: 500.0},
+				{ProductID: 7, Quantity: 2, Price: 120.0},
+				{ProductID: 8, Quantity: 4, Price: 75.0},
+				{ProductID: 9, Quantity: 1, Price: 85.0},
+			},
+		},
+		{
+			CartID: models.CartID{
+				EmployeeID:    "98765",
+				OperationTime: time.Date(2023, 1, 15, 12, 45, 0, 0, time.UTC),
+			},
+			OperationType: 3,
+			Items: []models.Item{
+				{ProductID: 9, Quantity: 5, Price: 60.0},
+			},
+		},
+		{
+			CartID: models.CartID{
+				EmployeeID:    "98765",
+				OperationTime: time.Date(2023, 1, 15, 12, 50, 0, 0, time.UTC),
+			},
+			OperationType: 2,
+			Items: []models.Item{
+				{ProductID: 10, Quantity: 2, Price: 300.0},
+			},
+		},
+	}
+
+	// Iterate over expectedCarts and verify each one exists in the returned carts
+	for _, expectedCart := range expectedCarts {
+		found := false
+		for _, actualCart := range carts {
+			if actualCart.CartID.EmployeeID == expectedCart.CartID.EmployeeID &&
+				actualCart.CartID.OperationTime.Equal(expectedCart.CartID.OperationTime) &&
+				actualCart.OperationType == expectedCart.OperationType {
+
+				// Assert that the items match
+				assert.ElementsMatch(t, expectedCart.Items, actualCart.Items, "Items should match for cart with OperationTime %s", expectedCart.CartID.OperationTime)
+
+				found = true
+				break
+			}
+		}
+		// Assert that the expected cart was found
+		assert.True(t, found, "Expected cart not found: %+v", expectedCart)
+	}
 }
