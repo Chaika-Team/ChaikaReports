@@ -3,9 +3,11 @@ module ChaikaReports
 go 1.22.5
 
 require (
+	github.com/go-kit/kit v0.13.0
 	github.com/go-kit/log v0.2.1
 	github.com/go-playground/validator/v10 v10.23.0
 	github.com/gocql/gocql v1.6.0
+	github.com/gorilla/mux v1.8.1
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
 )

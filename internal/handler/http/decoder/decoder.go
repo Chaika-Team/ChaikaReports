@@ -1,4 +1,4 @@
-package http
+package decoder
 
 import (
 	"ChaikaReports/internal/handler/http/schemas"
