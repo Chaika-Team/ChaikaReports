@@ -50,6 +50,9 @@ func DecodeInsertSalesRequest(_ context.Context, r *http.Request) (interface{}, 
 				Quantity:  itemSchema.Quantity,
 				Price:     itemSchema.Price,
 			}
+			if item.Quantity == 0 {
+				return nil, errors.New("invalid item quantity")
+			}
 			items = append(items, item)
 		}
 
