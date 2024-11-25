@@ -90,7 +90,7 @@ func (r *SalesRepository) GetEmployeeIDsByTrip(tripID *models.TripID) ([]string,
 }
 
 // UpdateItemQuantity Updates quantity of items in cart
-func (r *SalesRepository) UpdateItemQuantity(tripID *models.TripID, cartID *models.CartID, productID int, newQuantity *int16) error {
+func (r *SalesRepository) UpdateItemQuantity(tripID *models.TripID, cartID *models.CartID, productID *int, newQuantity *int16) error {
 	var queryText = `UPDATE operations SET quantity = ? WHERE route_id = ? AND start_time = ? AND employee_id = ? AND operation_time = ? AND product_id = ?`
 	result := r.session.Query(queryText, newQuantity, tripID.RouteID, tripID.StartTime, cartID.EmployeeID, cartID.OperationTime, productID).Exec()
 	if result != nil {
@@ -101,7 +101,7 @@ func (r *SalesRepository) UpdateItemQuantity(tripID *models.TripID, cartID *mode
 }
 
 // DeleteItemFromCart Deletes cart item (operation)
-func (r *SalesRepository) DeleteItemFromCart(tripID *models.TripID, cartID *models.CartID, productID int) error {
+func (r *SalesRepository) DeleteItemFromCart(tripID *models.TripID, cartID *models.CartID, productID *int) error {
 	var queryText = `DELETE FROM operations WHERE route_id = ? AND start_time = ? AND employee_id = ? AND operation_time = ? AND product_id = ?`
 	result := r.session.Query(queryText, tripID.RouteID, tripID.StartTime, cartID.EmployeeID, cartID.OperationTime, productID).Exec()
 	if result != nil {

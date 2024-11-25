@@ -1,4 +1,4 @@
-package cassandra_test
+package db_test_test
 
 import (
 	"ChaikaReports/internal/config"
