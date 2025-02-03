@@ -1,5 +1,21 @@
 package main
 
+// main.go
+// @title           ChaikaReports API
+// @version         1.0
+// @description     API documentation for the ChaikaReports microservice.
+// @termsOfService  http://swagger.io/terms/
+
+// @contact.name    API Support
+// @contact.url     http://www.swagger.io/support
+// @contact.email   support@chaikareports.com
+
+// @license.name    MIT
+// @license.url     https://opensource.org/licenses/MIT
+
+// @host            localhost:8080
+// @BasePath        /api/v1
+
 import (
 	"ChaikaReports/internal/config"
 	httpHandler "ChaikaReports/internal/handler/http"

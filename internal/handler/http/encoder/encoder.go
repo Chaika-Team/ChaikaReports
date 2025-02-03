@@ -35,7 +35,7 @@ func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 	}
 
 	w.WriteHeader(code)
-	json.NewEncoder(w).Encode(schemas.ErrorResponse{Error: msg})
+	_ = json.NewEncoder(w).Encode(schemas.ErrorResponse{Error: msg})
 }
 
 // Helper function to determine if the error is a validation error

@@ -5,12 +5,13 @@ import (
 	"ChaikaReports/internal/models"
 	"ChaikaReports/internal/repository/cassandra"
 	"context"
-	"github.com/go-kit/log"
-	"github.com/gocql/gocql"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/go-kit/log"
+	"github.com/gocql/gocql"
+	"github.com/stretchr/testify/assert"
 )
 
 var (

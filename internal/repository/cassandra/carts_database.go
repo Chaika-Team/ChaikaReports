@@ -4,9 +4,10 @@ import (
 	"ChaikaReports/internal/models"
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/go-kit/log"
 	"github.com/gocql/gocql"
-	"time"
 )
 
 type SalesRepository struct {

@@ -6,8 +6,22 @@ import (
 	"ChaikaReports/internal/service"
 	"context"
 	"errors"
+
 	"github.com/go-kit/kit/endpoint"
 )
+
+// MakeInsertSalesEndpoint creates the insert sales endpoint.
+//
+// @Summary      Insert Sales Data
+// @Description  Inserts sales data into the system.
+// @Tags         Sales
+// @Accept       json
+// @Produce      json
+// @Param        request  body      schemas.InsertSalesRequest  true  "Insert Sales Request"
+// @Success      200      {object}  schemas.InsertSalesResponse "Data inserted successfully"
+// @Failure      400      {object}  schemas.ErrorResponse       "Bad request"
+// @Failure      500      {object}  schemas.ErrorResponse       "Internal server error"
+// @Router       /sales [post]
 
 // MakeInsertSalesEndpoint creates the insert sales endpoint
 func MakeInsertSalesEndpoint(svc service.SalesService) endpoint.Endpoint {

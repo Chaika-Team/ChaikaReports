@@ -6,6 +6,8 @@ import (
 	"ChaikaReports/internal/service"
 	"net/http"
 
+	httpSwagger "github.com/swaggo/http-swagger"
+
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
 )
@@ -14,8 +16,13 @@ import (
 func NewHTTPHandler(svc service.SalesService) http.Handler {
 	r := mux.NewRouter()
 
+	// Serve Swagger UI at /docs/
+	r.PathPrefix("/docs/").Handler(httpSwagger.WrapHandler)
+
+	apiV1 := r.PathPrefix("/api/v1").Subrouter()
+
 	// Register the insert sales route
-	r.Handle("/api/v1/sales", httptransport.NewServer(
+	apiV1.Handle("/sales", httptransport.NewServer(
 		MakeInsertSalesEndpoint(svc),
 		decoder.DecodeInsertSalesRequest,
 		encoder.EncodeResponse,

@@ -2,6 +2,13 @@ package models
 
 import "time"
 
+// Operation types in Cart
+const (
+	OperationTypeSale   int8 = 1
+	OperationTypeRefund int8 = 2
+)
+
+// Item is a domain model that specifies the quantity, id and price of a product in a cart
 type Item struct {
 	ProductID int     `json:"product_id"`
 	Quantity  int16   `json:"quantity"`
@@ -17,7 +24,7 @@ type Cart struct {
 type Carriage struct {
 	TripID     TripID    `json:"trip_id"`
 	EndTime    time.Time `json:"end_time"`
-	CarriageID int8      `json:"carriage_id"`
+	CarriageID int8      `json:"carriage_id" validate:"required,gte=0,lte=127"`
 	Carts      []Cart    `json:"carts"`
 }
 
