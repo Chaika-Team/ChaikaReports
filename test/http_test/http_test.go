@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"github.com/go-kit/log"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -168,7 +169,7 @@ func TestInsertSalesEndpoint(t *testing.T) {
 			svc := service.NewSalesService(mockRepo)
 
 			// Initialize HTTP handler with the service
-			handler := httphandler.NewHTTPHandler(svc)
+			handler := httphandler.NewHTTPHandler(svc, log.NewNopLogger())
 
 			// Create HTTP request
 			req, err := http.NewRequest("POST", "/api/v1/sales", bytes.NewBufferString(tt.rawJSON))

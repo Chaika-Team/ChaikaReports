@@ -21,21 +21,29 @@ import (
 	httpHandler "ChaikaReports/internal/handler/http"
 	"ChaikaReports/internal/repository/cassandra"
 	"ChaikaReports/internal/service"
-	"net/http"
-
+	"context"
+	"fmt"
 	"github.com/go-kit/log"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 )
 
 func main() {
-	// Load configuration
-	cfg := config.LoadConfig("config.yml")
+	configPath := os.Getenv("CONFIG_PATH")
+	if configPath == "" {
+		configPath = "../../config.yml"
+	}
+	cfg, _ := config.LoadConfig(configPath)
 
 	// Initialize logger
 	logger := log.NewLogfmtLogger(log.StdlibWriter{})
 	logger = log.With(logger, "ts", log.DefaultTimestampUTC, "caller", log.DefaultCaller)
 
 	// Initialize Cassandra session
-	session, err := cassandra.InitCassandra(logger, cfg.Cassandra.Keyspace, cfg.Cassandra.Hosts, cfg.Cassandra.User, cfg.Cassandra.Password)
+	session, err := cassandra.InitCassandra(logger, cfg.Cassandra.Keyspace, cfg.Cassandra.Hosts, cfg.Cassandra.User, cfg.Cassandra.Password, cfg.Cassandra.Timeout, cfg.Cassandra.RetryDelay, cfg.Cassandra.RetryAttempts)
 	if err != nil {
 		logger.Log("error", "Failed to initialize Cassandra", "err", err)
 		return
@@ -49,11 +57,35 @@ func main() {
 	svc := service.NewSalesService(repo)
 
 	// Initialize HTTP handler
-	handler := httpHandler.NewHTTPHandler(svc)
+	handler := httpHandler.NewHTTPHandler(svc, logger)
 
 	// Start HTTP server
-	logger.Log("msg", "Starting server on :8080")
-	if err := http.ListenAndServe(":8080", handler); err != nil {
-		logger.Log("error", "Failed to start server", "err", err)
+	// Create server with configurable port
+	srv := &http.Server{
+		Addr:    fmt.Sprintf(":%d", cfg.Server.Port),
+		Handler: handler,
 	}
+
+	// Graceful shutdown handling
+	done := make(chan os.Signal, 1)
+	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		logger.Log("msg", fmt.Sprintf("Starting server on %s", srv.Addr))
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.Log("error", "Failed to start server", "err", err)
+			done <- os.Interrupt
+		}
+	}()
+
+	<-done
+	logger.Log("msg", "Server stopping")
+
+	ctx, cancel := context.WithTimeout(context.Background(), cfg.Server.Timeout*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		logger.Log("error", "Server shutdown failed", "err", err)
+	}
+
+	logger.Log("msg", "Server stopped")
 }

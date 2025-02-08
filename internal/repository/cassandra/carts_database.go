@@ -23,15 +23,18 @@ func NewSalesRepository(session *gocql.Session, logger log.Logger) *SalesReposit
 
 }
 
+const insertOperationQuery = `
+	INSERT INTO operations (route_id, start_time, end_time, carriage_id, 
+	employee_id, operation_type, operation_time, product_id, quantity, price)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+
 // InsertData Inserts all data from a Carriage into the Cassandra database
 func (r *SalesRepository) InsertData(ctx context.Context, carriageReport *models.Carriage) error {
 	batch := r.session.NewBatch(gocql.LoggedBatch).WithContext(ctx)
 	for _, cart := range carriageReport.Carts {
 		for _, item := range cart.Items {
 			// Batch query allows to save data integrity by stopping transaction if at least one insertion fails
-			batch.Query(`
-				INSERT INTO operations (route_id, start_time, end_time, carriage_id, employee_id, operation_type, operation_time, product_id, quantity, price)
-				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			batch.Query(insertOperationQuery,
 				&carriageReport.TripID.RouteID,
 				&carriageReport.TripID.StartTime,
 				&carriageReport.EndTime,
@@ -46,8 +49,10 @@ func (r *SalesRepository) InsertData(ctx context.Context, carriageReport *models
 		}
 	}
 	if err := r.session.ExecuteBatch(batch); err != nil {
-		_ = r.log.Log("error", fmt.Sprintf("Failed to insert carriage trip info %v", err))
-		return err
+		if logErr := r.log.Log("error", fmt.Sprintf("Failed to insert carriage trip info: %v", err)); logErr != nil {
+			return fmt.Errorf("failed to execute batch and log error: %v (log error: %v)", err, logErr)
+		}
+		return fmt.Errorf("failed to execute batch: %w", err)
 	}
 	return nil
 }
@@ -120,7 +125,7 @@ func aggregateCartsFromRows(iter *gocql.Iter, employeeID string) ([]models.Cart,
 	var operationType int8
 	var productID int
 	var quantity int16
-	var price float32
+	var price int64
 
 	for iter.Scan(&operationTime, &operationType, &productID, &quantity, &price) {
 
@@ -131,27 +136,14 @@ func aggregateCartsFromRows(iter *gocql.Iter, employeeID string) ([]models.Cart,
 		}
 
 		//Declares key and ensures uniqueness by employeeID and operationTime
-		cartKey := fmt.Sprintf("%s-%s", cartID.EmployeeID, cartID.OperationTime.Format(time.RFC3339))
+		cartKey := createCartKey(employeeID, operationTime)
+		item := createCartItem(productID, quantity, price)
 
 		// Checks if cart key exists in current map and inserts items into corresponding key
 		if cart, exists := cartMap[cartKey]; exists {
-			cart.Items = append(cart.Items, models.Item{
-				ProductID: productID,
-				Quantity:  quantity,
-				Price:     price,
-			})
+			addItemToExistingCart(cart, item)
 		} else { //Inserts new key and populates with items
-			cartMap[cartKey] = &models.Cart{
-				CartID:        cartID,
-				OperationType: operationType,
-				Items: []models.Item{
-					{
-						ProductID: productID,
-						Quantity:  quantity,
-						Price:     price,
-					},
-				},
-			}
+			cartMap[cartKey] = createNewCart(cartID, operationType, item)
 		}
 	}
 
@@ -166,4 +158,28 @@ func aggregateCartsFromRows(iter *gocql.Iter, employeeID string) ([]models.Cart,
 	}
 
 	return carts, nil
+}
+
+func createCartKey(employeeID string, operationTime time.Time) string {
+	return fmt.Sprintf("%s-%s", employeeID, operationTime.Format(time.RFC3339))
+}
+
+func createCartItem(productID int, quantity int16, price int64) models.Item {
+	return models.Item{
+		ProductID: productID,
+		Quantity:  quantity,
+		Price:     price,
+	}
+}
+
+func addItemToExistingCart(cart *models.Cart, item models.Item) {
+	cart.Items = append(cart.Items, item)
+}
+
+func createNewCart(cartID models.CartID, operationType int8, item models.Item) *models.Cart {
+	return &models.Cart{
+		CartID:        cartID,
+		OperationType: operationType,
+		Items:         []models.Item{item},
+	}
 }

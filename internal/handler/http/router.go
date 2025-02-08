@@ -4,6 +4,7 @@ import (
 	"ChaikaReports/internal/handler/http/decoder"
 	"ChaikaReports/internal/handler/http/encoder"
 	"ChaikaReports/internal/service"
+	"github.com/go-kit/log"
 	"net/http"
 
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -13,7 +14,7 @@ import (
 )
 
 // NewHTTPHandler initializes and returns a new HTTP handler with all routes defined
-func NewHTTPHandler(svc service.SalesService) http.Handler {
+func NewHTTPHandler(svc service.SalesService, logger log.Logger) http.Handler {
 	r := mux.NewRouter()
 
 	// Serve Swagger UI at /docs/
@@ -26,7 +27,7 @@ func NewHTTPHandler(svc service.SalesService) http.Handler {
 		MakeInsertSalesEndpoint(svc),
 		decoder.DecodeInsertSalesRequest,
 		encoder.EncodeResponse,
-		httptransport.ServerErrorEncoder(encoder.EncodeError),
+		httptransport.ServerErrorEncoder(encoder.EncodeError(logger)),
 	)).Methods("POST")
 
 	// Add more routes as needed

@@ -3,19 +3,29 @@ package cassandra
 import (
 	"github.com/go-kit/log"
 	"github.com/gocql/gocql"
+	"time"
 )
 
-func InitCassandra(logger log.Logger, keyspace string, hosts []string, username, password string) (*gocql.Session, error) { //TODO Add connection retry
+func InitCassandra(logger log.Logger, keyspace string, hosts []string, username, password string, timeout time.Duration, delay time.Duration, attempts int) (*gocql.Session, error) { //TODO Add connection retry
 	cluster := gocql.NewCluster(hosts...)
 	cluster.Keyspace = keyspace
 	cluster.Consistency = gocql.Quorum
+	cluster.Timeout = timeout
 	cluster.Authenticator = gocql.PasswordAuthenticator{
 		Username: username,
 		Password: password,
 	}
+	// Add retry logic
 	var session *gocql.Session
 	var err error
-	session, err = cluster.CreateSession()
+	for i := 0; i < attempts; i++ {
+		session, err = cluster.CreateSession()
+		if err == nil {
+			break
+		}
+		_ = logger.Log("msg", "Failed to create session, retrying", "attempt", i+1, "error", err)
+		time.Sleep(delay)
+	}
 
 	if err != nil {
 		_ = logger.Log("msg", "Failed to initialize Cassandra", "error", err)

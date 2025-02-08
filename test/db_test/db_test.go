@@ -17,15 +17,19 @@ import (
 var (
 	testSession *gocql.Session
 	testRepo    *cassandra.SalesRepository
-	ctx         context.Context
+	ctx         = context.Background()
 )
 
 func TestMain(m *testing.M) {
-	cfg := config.LoadConfig("C:/Users/Greg/GolandProjects/ChaikaReports/config.yml")
+	configPath := os.Getenv("CONFIG_PATH")
+	if configPath == "" {
+		configPath = "../../config.yml"
+	}
+	cfg, _ := config.LoadConfig(configPath)
 
 	// Connect to the test keyspace
 	var err error
-	testSession, err = cassandra.InitCassandra(log.NewNopLogger(), cfg.CassandraTest.Keyspace, cfg.CassandraTest.Hosts, cfg.CassandraTest.User, cfg.CassandraTest.Password)
+	testSession, err = cassandra.InitCassandra(log.NewNopLogger(), cfg.CassandraTest.Keyspace, cfg.CassandraTest.Hosts, cfg.CassandraTest.User, cfg.CassandraTest.Password, cfg.CassandraTest.Timeout, cfg.CassandraTest.RetryDelay, cfg.CassandraTest.RetryAttempts)
 	if err != nil {
 		panic("Failed to connect to test keyspace")
 	}

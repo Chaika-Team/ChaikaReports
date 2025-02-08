@@ -10,9 +10,9 @@ const (
 
 // Item is a domain model that specifies the quantity, id and price of a product in a cart
 type Item struct {
-	ProductID int     `json:"product_id"`
-	Quantity  int16   `json:"quantity"`
-	Price     float32 `json:"price"`
+	ProductID int   `json:"product_id"`
+	Quantity  int16 `json:"quantity"`
+	Price     int64 `json:"price"`
 }
 
 type Cart struct {
