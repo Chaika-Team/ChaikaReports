@@ -6,8 +6,8 @@ import (
 	"ChaikaReports/internal/service"
 	"context"
 	"errors"
-
 	"github.com/go-kit/kit/endpoint"
+	"time"
 )
 
 // MakeInsertSalesEndpoint creates the insert sales endpoint.
@@ -39,4 +39,68 @@ func MakeInsertSalesEndpoint(svc service.SalesService) endpoint.Endpoint {
 			Message: "Data inserted successfully",
 		}, nil
 	}
+}
+
+func MakeGetEmployeeCartsInTripEndpoint(svc service.SalesService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		// Assert the request to our schema type.
+		req, ok := request.(schemas.GetEmployeeCartsInTripRequest)
+		if !ok {
+			return nil, errors.New("invalid request type")
+		}
+
+		// Parse the trip's start time.
+		startTime, err := time.Parse(time.RFC3339, req.TripID.StartTime)
+		if err != nil {
+			return nil, errors.New("invalid start_time format; must be RFC3339")
+		}
+
+		// Build the domain TripID.
+		tripID := models.TripID{
+			RouteID:   req.TripID.RouteID,
+			StartTime: startTime,
+		}
+
+		// Call the service. EmployeeID remains a string.
+		carts, err := svc.GetEmployeeCartsInTrip(ctx, &tripID, &req.EmployeeID)
+		if err != nil {
+			return nil, err
+		}
+
+		// Map domain carts to our schema response.
+		var schemaCarts []schemas.Cart
+		for _, cart := range carts {
+			schemaCarts = append(schemaCarts, mapDomainCartToSchemaCart(cart))
+		}
+
+		response := schemas.GetEmployeeCartsInTripResponse{
+			Carts: schemaCarts,
+		}
+		return response, nil
+	}
+}
+
+// mapDomainCartToSchemaCart converts a domain Cart (models.Cart) into a schema Cart (schemas.Cart).
+func mapDomainCartToSchemaCart(cart models.Cart) schemas.Cart {
+	return schemas.Cart{
+		CartID: schemas.CartID{
+			EmployeeID:    cart.CartID.EmployeeID,
+			OperationTime: cart.CartID.OperationTime.Format(time.RFC3339), // Assuming domain CartID.OperationTime is time.Time.
+		},
+		OperationType: cart.OperationType,
+		Items:         mapDomainItemsToSchemaItems(cart.Items),
+	}
+}
+
+// mapDomainItemsToSchemaItems converts a slice of domain Items into schema Items.
+func mapDomainItemsToSchemaItems(items []models.Item) []schemas.Item {
+	var schemaItems []schemas.Item
+	for _, item := range items {
+		schemaItems = append(schemaItems, schemas.Item{
+			ProductID: item.ProductID,
+			Quantity:  item.Quantity,
+			Price:     item.Price,
+		})
+	}
+	return schemaItems
 }

@@ -8,7 +8,7 @@ import (
 
 type SalesService interface {
 	InsertData(ctx context.Context, carriageReport *models.Carriage) error
-	GetEmployeeCartsInTrip(tripID *models.TripID, employeeID *string) ([]models.Cart, error)
+	GetEmployeeCartsInTrip(ctx context.Context, tripID *models.TripID, employeeID *string) ([]models.Cart, error)
 	GetEmployeeIDsByTrip(tripID *models.TripID) ([]string, error)
 	UpdateItemQuantity(tripID *models.TripID, cartID *models.CartID, productID *int, newQuantity *int16) error
 	DeleteItemFromCart(tripID *models.TripID, cartID *models.CartID, productID *int) error
@@ -29,8 +29,8 @@ func (s *salesService) InsertData(ctx context.Context, carriageReport *models.Ca
 }
 
 // GetEmployeeCartsInTrip Gets all carts an employee made during trip
-func (s *salesService) GetEmployeeCartsInTrip(tripID *models.TripID, employeeID *string) ([]models.Cart, error) {
-	return s.repo.GetEmployeeCartsInTrip(tripID, employeeID)
+func (s *salesService) GetEmployeeCartsInTrip(ctx context.Context, tripID *models.TripID, employeeID *string) ([]models.Cart, error) {
+	return s.repo.GetEmployeeCartsInTrip(ctx, tripID, employeeID)
 }
 
 // GetEmployeeIDsByTrip Gets all employee ID's in trip

@@ -79,3 +79,23 @@ func DecodeInsertSalesRequest(_ context.Context, r *http.Request) (interface{}, 
 
 	return carriage, nil
 }
+
+func DecodeGetEmployeeCartsInTripRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	query := r.URL.Query()
+	routeID := query.Get("route_id")
+	startTime := query.Get("start_time")
+	employeeID := query.Get("employee_id")
+
+	if routeID == "" || startTime == "" || employeeID == "" {
+		return nil, errors.New("missing one or more required query parameters: route_id, start_time, employee_id")
+	}
+
+	req := schemas.GetEmployeeCartsInTripRequest{
+		TripID: schemas.TripID{
+			RouteID:   routeID,
+			StartTime: startTime,
+		},
+		EmployeeID: employeeID,
+	}
+	return req, nil
+}

@@ -65,9 +65,9 @@ func TestInsert(t *testing.T) {
 				},
 				OperationType: 1,
 				Items: []models.Item{
-					{ProductID: 1, Quantity: 10, Price: 100.0},
-					{ProductID: 2, Quantity: 5, Price: 200.0},
-					{ProductID: 3, Quantity: 2, Price: 250.0},
+					{ProductID: 1, Quantity: 10, Price: 100},
+					{ProductID: 2, Quantity: 5, Price: 200},
+					{ProductID: 3, Quantity: 2, Price: 250},
 				},
 			},
 			// Second employee's cart
@@ -78,8 +78,8 @@ func TestInsert(t *testing.T) {
 				},
 				OperationType: 2,
 				Items: []models.Item{
-					{ProductID: 4, Quantity: 7, Price: 150.0},
-					{ProductID: 5, Quantity: 3, Price: 80.0},
+					{ProductID: 4, Quantity: 7, Price: 150},
+					{ProductID: 5, Quantity: 3, Price: 80},
 				},
 			},
 			// Third employee's cart
@@ -90,10 +90,10 @@ func TestInsert(t *testing.T) {
 				},
 				OperationType: 1,
 				Items: []models.Item{
-					{ProductID: 6, Quantity: 1, Price: 500.0},
-					{ProductID: 7, Quantity: 2, Price: 120.0},
-					{ProductID: 8, Quantity: 4, Price: 75.0},
-					{ProductID: 9, Quantity: 1, Price: 85.0},
+					{ProductID: 6, Quantity: 1, Price: 500},
+					{ProductID: 7, Quantity: 2, Price: 120},
+					{ProductID: 8, Quantity: 4, Price: 75},
+					{ProductID: 9, Quantity: 1, Price: 85},
 				},
 			},
 			// Fourth employee's cart with multiple operations
@@ -104,7 +104,7 @@ func TestInsert(t *testing.T) {
 				},
 				OperationType: 3,
 				Items: []models.Item{
-					{ProductID: 9, Quantity: 5, Price: 60.0},
+					{ProductID: 9, Quantity: 5, Price: 60},
 				},
 			},
 			{
@@ -114,7 +114,7 @@ func TestInsert(t *testing.T) {
 				},
 				OperationType: 2,
 				Items: []models.Item{
-					{ProductID: 10, Quantity: 2, Price: 300.0},
+					{ProductID: 10, Quantity: 2, Price: 300},
 				},
 			},
 		},
@@ -141,7 +141,7 @@ func TestGetEmployeeCartsInTrip(t *testing.T) {
 	employeeID := testEmployeeID
 
 	// Retrieve carts from the repository
-	carts, err := testRepo.GetEmployeeCartsInTrip(&tripID, &employeeID)
+	carts, err := testRepo.GetEmployeeCartsInTrip(ctx, &tripID, &employeeID)
 
 	// Log the returned carts for debugging
 	t.Logf("Returned carts: %+v", carts)

@@ -58,7 +58,7 @@ func (r *SalesRepository) InsertData(ctx context.Context, carriageReport *models
 }
 
 // GetEmployeeCartsInTrip Gets all carts employee has sold during trip, returns array of Carts
-func (r *SalesRepository) GetEmployeeCartsInTrip(tripID *models.TripID, employeeID *string) ([]models.Cart, error) {
+func (r *SalesRepository) GetEmployeeCartsInTrip(ctx context.Context, tripID *models.TripID, employeeID *string) ([]models.Cart, error) {
 	var queryText = `SELECT operation_time, operation_type, product_id, quantity, price FROM operations WHERE route_id = ? AND start_time = ? AND employee_id = ?`
 	iter := r.session.Query(queryText, &tripID.RouteID, &tripID.StartTime, &employeeID).Iter()
 	// Uses helper function to convert query result into slice of models.Cart
@@ -118,7 +118,7 @@ func (r *SalesRepository) DeleteItemFromCart(tripID *models.TripID, cartID *mode
 }
 
 // Helper function to process rows and return an array of Carts
-func aggregateCartsFromRows(iter *gocql.Iter, employeeID string) ([]models.Cart, error) { //TODO Divide function into sub functions for checking and inserting into map
+func aggregateCartsFromRows(iter *gocql.Iter, employeeID string) ([]models.Cart, error) {
 	cartMap := make(map[string]*models.Cart)
 
 	var operationTime time.Time

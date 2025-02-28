@@ -10,7 +10,7 @@ type SalesRepository interface {
 	InsertData(ctx context.Context, carriageReport *models.Carriage) error
 
 	// GetEmployeeCartsInTrip Gets all carts employee has sold during trip, returns array of Carts
-	GetEmployeeCartsInTrip(tripID *models.TripID, employeeID *string) ([]models.Cart, error)
+	GetEmployeeCartsInTrip(ctx context.Context, tripID *models.TripID, employeeID *string) ([]models.Cart, error)
 
 	// GetEmployeeIDsByTrip Gets all employees in trip
 	GetEmployeeIDsByTrip(tripID *models.TripID) ([]string, error)

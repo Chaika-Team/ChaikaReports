@@ -28,7 +28,7 @@ func (m *MockSalesRepository) InsertData(ctx context.Context, carriageReport *mo
 	return args.Error(0)
 }
 
-func (m *MockSalesRepository) GetEmployeeCartsInTrip(tripID *models.TripID, employeeID *string) ([]models.Cart, error) {
+func (m *MockSalesRepository) GetEmployeeCartsInTrip(ctx context.Context, tripID *models.TripID, employeeID *string) ([]models.Cart, error) {
 	args := m.Called(tripID, employeeID)
 	if args.Get(0) != nil {
 		return args.Get(0).([]models.Cart), args.Error(1)
