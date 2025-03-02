@@ -100,6 +100,24 @@ func DecodeGetEmployeeCartsInTripRequest(_ context.Context, r *http.Request) (in
 	return req, nil
 }
 
+func DecodeGetEmployeeIDsByTripRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	query := r.URL.Query()
+	routeID := query.Get("route_id")
+	startTime := query.Get("start_time")
+
+	if routeID == "" || startTime == "" {
+		return nil, errors.New("missing required query parameters: route_id and start_time")
+	}
+
+	req := schemas.GetEmployeeIDsByTripRequest{
+		TripID: schemas.TripID{
+			RouteID:   routeID,
+			StartTime: startTime,
+		},
+	}
+	return req, nil
+}
+
 func DecodeUpdateItemQuantityRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	var req schemas.UpdateItemQuantityRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

@@ -80,6 +80,38 @@ func MakeGetEmployeeCartsInTripEndpoint(svc service.SalesService) endpoint.Endpo
 	}
 }
 
+func MakeGetEmployeeIDsByTripEndpoint(svc service.SalesService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req, ok := request.(schemas.GetEmployeeIDsByTripRequest)
+		if !ok {
+			return nil, errors.New("invalid request type")
+		}
+
+		// Parse the trip's start time.
+		startTime, err := time.Parse(time.RFC3339, req.TripID.StartTime)
+		if err != nil {
+			return nil, errors.New("invalid start_time format; must be RFC3339")
+		}
+
+		// Build the domain TripID.
+		tripID := models.TripID{
+			RouteID:   req.TripID.RouteID,
+			StartTime: startTime,
+		}
+
+		// Call the service method.
+		employeeIDs, err := svc.GetEmployeeIDsByTrip(ctx, &tripID)
+		if err != nil {
+			return nil, err
+		}
+
+		// Build and return the response.
+		return schemas.GetEmployeeIDsByTripResponse{
+			EmployeeIDs: employeeIDs,
+		}, nil
+	}
+}
+
 func MakeUpdateItemQuantityEndpoint(svc service.SalesService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req, ok := request.(schemas.UpdateItemQuantityRequest)

@@ -50,6 +50,15 @@ type GetEmployeeCartsInTripResponse struct {
 	Carts []Cart `json:"carts"`
 }
 
+type GetEmployeeIDsByTripRequest struct {
+	TripID TripID `json:"trip_id" validate:"required"`
+}
+
+// GetEmployeeIDsByTripResponse represents the response with the list of employee IDs.
+type GetEmployeeIDsByTripResponse struct {
+	EmployeeIDs []string `json:"employee_ids"`
+}
+
 type UpdateItemQuantityRequest struct {
 	TripID      TripID `json:"trip_id" validate:"required"`
 	CartID      CartID `json:"cart_id" validate:"required"`

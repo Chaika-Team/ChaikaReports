@@ -101,20 +101,26 @@ func (r *SalesRepository) GetEmployeeCartsInTrip(ctx context.Context, tripID *mo
 }
 
 // GetEmployeeIDsByTrip Gets all employees by TripID (RouteID, StartTime)
-func (r *SalesRepository) GetEmployeeIDsByTrip(tripID *models.TripID) ([]string, error) {
+func (r *SalesRepository) GetEmployeeIDsByTrip(ctx context.Context, tripID *models.TripID) ([]string, error) {
 	iter := r.session.Query(getEmployeeIdsByTripQuery,
 		&tripID.RouteID,
 		&tripID.StartTime).Iter()
 
-	var employeeIDs []string
+	// Making a map to get unique ID's since Cassandra only allows DISTINCT for partition keys
+	uniqueIDs := make(map[string]struct{})
 	var employeeID string
 	for iter.Scan(&employeeID) {
-		employeeIDs = append(employeeIDs, employeeID)
+		uniqueIDs[employeeID] = struct{}{}
 	}
 
 	if err := iter.Close(); err != nil {
 		_ = r.log.Log("error", fmt.Sprintf("Failed to get all employees by trip ID %v", err))
 		return nil, err
+	}
+
+	var employeeIDs []string
+	for id := range uniqueIDs {
+		employeeIDs = append(employeeIDs, id)
 	}
 
 	return employeeIDs, nil
