@@ -16,7 +16,7 @@ type SalesRepository interface {
 	GetEmployeeIDsByTrip(tripID *models.TripID) ([]string, error)
 
 	// UpdateItemQuantity Updates item quantity in cart
-	UpdateItemQuantity(tripID *models.TripID, cartID *models.CartID, productID *int, newQuantity *int16) error
+	UpdateItemQuantity(ctx context.Context, tripID *models.TripID, cartID *models.CartID, productID *int, newQuantity *int16) error
 
 	// DeleteItemFromCart Deletes item from cart
 	DeleteItemFromCart(tripID *models.TripID, cartID *models.CartID, productID *int) error

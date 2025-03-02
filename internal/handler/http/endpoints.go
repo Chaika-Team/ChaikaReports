@@ -80,6 +80,47 @@ func MakeGetEmployeeCartsInTripEndpoint(svc service.SalesService) endpoint.Endpo
 	}
 }
 
+func MakeUpdateItemQuantityEndpoint(svc service.SalesService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req, ok := request.(schemas.UpdateItemQuantityRequest)
+		if !ok {
+			return nil, errors.New("invalid request type")
+		}
+
+		// Parse TripID StartTime from string to time.Time.
+		startTime, err := time.Parse(time.RFC3339, req.TripID.StartTime)
+		if err != nil {
+			return nil, errors.New("invalid start_time format; must be RFC3339")
+		}
+
+		tripID := models.TripID{
+			RouteID:   req.TripID.RouteID,
+			StartTime: startTime,
+		}
+
+		// Parse CartID OperationTime from string to time.Time.
+		operationTime, err := time.Parse(time.RFC3339, req.CartID.OperationTime)
+		if err != nil {
+			return nil, errors.New("invalid operation_time format; must be RFC3339")
+		}
+
+		cartID := models.CartID{
+			EmployeeID:    req.CartID.EmployeeID,
+			OperationTime: operationTime,
+		}
+
+		// Call the service method.
+		err = svc.UpdateItemQuantity(ctx, &tripID, &cartID, &req.ProductID, &req.NewQuantity)
+		if err != nil {
+			return nil, err
+		}
+
+		return schemas.UpdateItemQuantityResponse{
+			Message: "Item quantity updated successfully",
+		}, nil
+	}
+}
+
 // mapDomainCartToSchemaCart converts a domain Cart (models.Cart) into a schema Cart (schemas.Cart).
 func mapDomainCartToSchemaCart(cart models.Cart) schemas.Cart {
 	return schemas.Cart{

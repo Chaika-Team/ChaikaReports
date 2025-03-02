@@ -50,6 +50,18 @@ type GetEmployeeCartsInTripResponse struct {
 	Carts []Cart `json:"carts"`
 }
 
+type UpdateItemQuantityRequest struct {
+	TripID      TripID `json:"trip_id" validate:"required"`
+	CartID      CartID `json:"cart_id" validate:"required"`
+	ProductID   int    `json:"product_id" validate:"required"`
+	NewQuantity int16  `json:"new_quantity" validate:"required"`
+}
+
+// UpdateItemQuantityResponse represents the response body for a successful update.
+type UpdateItemQuantityResponse struct {
+	Message string `json:"message"`
+}
+
 // ErrorResponse represents the error response body
 type ErrorResponse struct {
 	Error string `json:"error"`

@@ -38,5 +38,12 @@ func NewHTTPHandler(svc service.SalesService, logger log.Logger) http.Handler {
 		httptransport.ServerErrorEncoder(encoder.EncodeError(logger)),
 	)).Methods("GET")
 
+	apiV1.Handle("/sales/trip/cart/item/quantity", httptransport.NewServer(
+		MakeUpdateItemQuantityEndpoint(svc),
+		decoder.DecodeUpdateItemQuantityRequest,
+		encoder.EncodeResponse,
+		httptransport.ServerErrorEncoder(encoder.EncodeError(logger)),
+	)).Methods("PUT")
+
 	return r
 }

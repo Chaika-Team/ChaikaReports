@@ -28,6 +28,27 @@ const insertOperationQuery = `
 	employee_id, operation_type, operation_time, product_id, quantity, price)
 	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
+const getEmployeeCartsInTripQuery = `SELECT operation_time, operation_type, product_id, quantity, price
+	FROM operations
+	WHERE route_id = ?
+	  AND start_time = ?
+	  AND employee_id = ?`
+
+const getEmployeeIdsByTripQuery = `SELECT employee_id 
+	FROM operations 
+	WHERE route_id = ?
+	  AND start_time = ?`
+
+const updateItemQuantityQuery = `UPDATE operations SET quantity = ? 
+    WHERE route_id = ? 
+      AND start_time = ?
+      AND employee_id = ?
+      AND operation_time = ?
+      AND product_id = ?
+    IF EXISTS`
+
+const deleteItemFromCartQuery = `DELETE FROM operations WHERE route_id = ? AND start_time = ? AND employee_id = ? AND operation_time = ? AND product_id = ?`
+
 // InsertData Inserts all data from a Carriage into the Cassandra database
 func (r *SalesRepository) InsertData(ctx context.Context, carriageReport *models.Carriage) error {
 	batch := r.session.NewBatch(gocql.LoggedBatch).WithContext(ctx)
@@ -59,9 +80,11 @@ func (r *SalesRepository) InsertData(ctx context.Context, carriageReport *models
 
 // GetEmployeeCartsInTrip Gets all carts employee has sold during trip, returns array of Carts
 func (r *SalesRepository) GetEmployeeCartsInTrip(ctx context.Context, tripID *models.TripID, employeeID *string) ([]models.Cart, error) {
-	var queryText = `SELECT operation_time, operation_type, product_id, quantity, price FROM operations WHERE route_id = ? AND start_time = ? AND employee_id = ?`
-	iter := r.session.Query(queryText, &tripID.RouteID, &tripID.StartTime, &employeeID).Iter()
-	// Uses helper function to convert query result into slice of models.Cart
+	iter := r.session.Query(getEmployeeCartsInTripQuery,
+		&tripID.RouteID,
+		&tripID.StartTime,
+		&employeeID).Iter()
+
 	carts, err := aggregateCartsFromRows(iter, *employeeID)
 	if err != nil {
 		_ = r.log.Log("error", fmt.Sprintf("Failed to aggregate carts by employee in trip %v", err))
@@ -79,8 +102,10 @@ func (r *SalesRepository) GetEmployeeCartsInTrip(ctx context.Context, tripID *mo
 
 // GetEmployeeIDsByTrip Gets all employees by TripID (RouteID, StartTime)
 func (r *SalesRepository) GetEmployeeIDsByTrip(tripID *models.TripID) ([]string, error) {
-	var queryText = `SELECT employee_id FROM operations WHERE route_id = ? AND start_time = ?`
-	iter := r.session.Query(queryText, &tripID.RouteID, &tripID.StartTime).Iter()
+	iter := r.session.Query(getEmployeeIdsByTripQuery,
+		&tripID.RouteID,
+		&tripID.StartTime).Iter()
+
 	var employeeIDs []string
 	var employeeID string
 	for iter.Scan(&employeeID) {
@@ -96,20 +121,34 @@ func (r *SalesRepository) GetEmployeeIDsByTrip(tripID *models.TripID) ([]string,
 }
 
 // UpdateItemQuantity Updates quantity of items in cart
-func (r *SalesRepository) UpdateItemQuantity(tripID *models.TripID, cartID *models.CartID, productID *int, newQuantity *int16) error {
-	var queryText = `UPDATE operations SET quantity = ? WHERE route_id = ? AND start_time = ? AND employee_id = ? AND operation_time = ? AND product_id = ?`
-	result := r.session.Query(queryText, newQuantity, tripID.RouteID, tripID.StartTime, cartID.EmployeeID, cartID.OperationTime, productID).Exec()
-	if result != nil {
-		_ = r.log.Log("error", fmt.Sprintf("Failed to update item quantity %v", result))
-		return result
+func (r *SalesRepository) UpdateItemQuantity(ctx context.Context, tripID *models.TripID, cartID *models.CartID, productID *int, newQuantity *int16) error {
+	applied, err := r.session.Query(updateItemQuantityQuery, newQuantity,
+		tripID.RouteID,
+		tripID.StartTime,
+		cartID.EmployeeID,
+		cartID.OperationTime,
+		productID).ScanCAS()
+
+	if err != nil {
+		_ = r.log.Log("error", fmt.Sprintf("Failed to update item quantity %v", err))
+		return err
 	}
+	if !applied {
+		return fmt.Errorf("Transaction does not exist")
+	}
+
 	return nil
 }
 
 // DeleteItemFromCart Deletes cart item (operation)
 func (r *SalesRepository) DeleteItemFromCart(tripID *models.TripID, cartID *models.CartID, productID *int) error {
-	var queryText = `DELETE FROM operations WHERE route_id = ? AND start_time = ? AND employee_id = ? AND operation_time = ? AND product_id = ?`
-	result := r.session.Query(queryText, tripID.RouteID, tripID.StartTime, cartID.EmployeeID, cartID.OperationTime, productID).Exec()
+	result := r.session.Query(deleteItemFromCartQuery,
+		tripID.RouteID,
+		tripID.StartTime,
+		cartID.EmployeeID,
+		cartID.OperationTime,
+		productID).Exec()
+
 	if result != nil {
 		_ = r.log.Log("error", fmt.Sprintf("Failed to delete item in cart %v", result))
 		return result

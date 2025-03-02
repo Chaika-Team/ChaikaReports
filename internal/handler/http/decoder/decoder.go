@@ -99,3 +99,11 @@ func DecodeGetEmployeeCartsInTripRequest(_ context.Context, r *http.Request) (in
 	}
 	return req, nil
 }
+
+func DecodeUpdateItemQuantityRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	var req schemas.UpdateItemQuantityRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, errors.New("invalid request body")
+	}
+	return req, nil
+}

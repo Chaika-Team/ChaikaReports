@@ -19,6 +19,9 @@ func EncodeResponse(_ context.Context, w http.ResponseWriter, response interface
 	case schemas.GetEmployeeCartsInTripResponse:
 		w.WriteHeader(http.StatusOK)
 		return json.NewEncoder(w).Encode(res)
+	case schemas.UpdateItemQuantityResponse:
+		w.WriteHeader(http.StatusOK)
+		return json.NewEncoder(w).Encode(res)
 	default:
 		return fmt.Errorf("unknown response type: %T", response)
 	}
