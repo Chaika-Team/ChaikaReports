@@ -11,7 +11,7 @@ type SalesService interface {
 	GetEmployeeCartsInTrip(ctx context.Context, tripID *models.TripID, employeeID *string) ([]models.Cart, error)
 	GetEmployeeIDsByTrip(ctx context.Context, tripID *models.TripID) ([]string, error)
 	UpdateItemQuantity(ctx context.Context, tripID *models.TripID, cartID *models.CartID, productID *int, newQuantity *int16) error
-	DeleteItemFromCart(tripID *models.TripID, cartID *models.CartID, productID *int) error
+	DeleteItemFromCart(ctx context.Context, tripID *models.TripID, cartID *models.CartID, productID *int) error
 }
 
 type salesService struct {
@@ -44,6 +44,6 @@ func (s *salesService) UpdateItemQuantity(ctx context.Context, tripID *models.Tr
 }
 
 // DeleteItemFromCart Deletes item from cart
-func (s *salesService) DeleteItemFromCart(tripID *models.TripID, cartID *models.CartID, productID *int) error {
-	return s.repo.DeleteItemFromCart(tripID, cartID, productID)
+func (s *salesService) DeleteItemFromCart(ctx context.Context, tripID *models.TripID, cartID *models.CartID, productID *int) error {
+	return s.repo.DeleteItemFromCart(ctx, tripID, cartID, productID)
 }

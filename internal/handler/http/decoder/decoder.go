@@ -125,3 +125,11 @@ func DecodeUpdateItemQuantityRequest(_ context.Context, r *http.Request) (interf
 	}
 	return req, nil
 }
+
+func DecodeDeleteItemFromCartRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	var req schemas.DeleteItemFromCartRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, errors.New("invalid request body")
+	}
+	return req, nil
+}

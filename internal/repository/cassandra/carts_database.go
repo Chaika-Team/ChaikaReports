@@ -47,7 +47,7 @@ const updateItemQuantityQuery = `UPDATE operations SET quantity = ?
       AND product_id = ?
     IF EXISTS`
 
-const deleteItemFromCartQuery = `DELETE FROM operations WHERE route_id = ? AND start_time = ? AND employee_id = ? AND operation_time = ? AND product_id = ?`
+const deleteItemFromCartQuery = `DELETE FROM operations WHERE route_id = ? AND start_time = ? AND employee_id = ? AND operation_time = ? AND product_id = ? IF EXISTS`
 
 // InsertData Inserts all data from a Carriage into the Cassandra database
 func (r *SalesRepository) InsertData(ctx context.Context, carriageReport *models.Carriage) error {
@@ -147,18 +147,23 @@ func (r *SalesRepository) UpdateItemQuantity(ctx context.Context, tripID *models
 }
 
 // DeleteItemFromCart Deletes cart item (operation)
-func (r *SalesRepository) DeleteItemFromCart(tripID *models.TripID, cartID *models.CartID, productID *int) error {
-	result := r.session.Query(deleteItemFromCartQuery,
+func (r *SalesRepository) DeleteItemFromCart(ctx context.Context, tripID *models.TripID, cartID *models.CartID, productID *int) error {
+	deleted, err := r.session.Query(deleteItemFromCartQuery,
 		tripID.RouteID,
 		tripID.StartTime,
 		cartID.EmployeeID,
 		cartID.OperationTime,
-		productID).Exec()
+		productID).ScanCAS()
 
-	if result != nil {
-		_ = r.log.Log("error", fmt.Sprintf("Failed to delete item in cart %v", result))
-		return result
+	if err != nil {
+		_ = r.log.Log("error", fmt.Sprintf("Failed to delete item in cart %v", err))
+		return err
 	}
+
+	if !deleted {
+		return fmt.Errorf("Item doesnt exist")
+	}
+
 	return nil
 }
 

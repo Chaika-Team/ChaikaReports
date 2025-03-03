@@ -19,5 +19,5 @@ type SalesRepository interface {
 	UpdateItemQuantity(ctx context.Context, tripID *models.TripID, cartID *models.CartID, productID *int, newQuantity *int16) error
 
 	// DeleteItemFromCart Deletes item from cart
-	DeleteItemFromCart(tripID *models.TripID, cartID *models.CartID, productID *int) error
+	DeleteItemFromCart(ctx context.Context, tripID *models.TripID, cartID *models.CartID, productID *int) error
 }

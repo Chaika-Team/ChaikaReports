@@ -71,6 +71,17 @@ type UpdateItemQuantityResponse struct {
 	Message string `json:"message"`
 }
 
+type DeleteItemFromCartRequest struct {
+	TripID    TripID `json:"trip_id" validate:"required"`
+	CartID    CartID `json:"cart_id" validate:"required"`
+	ProductID int    `json:"product_id" validate:"required"`
+}
+
+// DeleteItemFromCartResponse represents the response body for a successful deletion.
+type DeleteItemFromCartResponse struct {
+	Message string `json:"message"`
+}
+
 // ErrorResponse represents the error response body
 type ErrorResponse struct {
 	Error string `json:"error"`

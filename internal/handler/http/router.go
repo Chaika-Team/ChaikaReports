@@ -52,5 +52,12 @@ func NewHTTPHandler(svc service.SalesService, logger log.Logger) http.Handler {
 		httptransport.ServerErrorEncoder(encoder.EncodeError(logger)),
 	)).Methods("PUT")
 
+	apiV1.Handle("/sales/trip/cart/item", httptransport.NewServer(
+		MakeDeleteItemFromCartEndpoint(svc),
+		decoder.DecodeDeleteItemFromCartRequest,
+		encoder.EncodeResponse,
+		httptransport.ServerErrorEncoder(encoder.EncodeError(logger)),
+	)).Methods("DELETE")
+
 	return r
 }

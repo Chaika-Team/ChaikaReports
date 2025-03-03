@@ -153,6 +153,45 @@ func MakeUpdateItemQuantityEndpoint(svc service.SalesService) endpoint.Endpoint 
 	}
 }
 
+func MakeDeleteItemFromCartEndpoint(svc service.SalesService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req, ok := request.(schemas.DeleteItemFromCartRequest)
+		if !ok {
+			return nil, errors.New("invalid request type")
+		}
+
+		// Parse Trip start time.
+		startTime, err := time.Parse(time.RFC3339, req.TripID.StartTime)
+		if err != nil {
+			return nil, errors.New("invalid start_time format; must be RFC3339")
+		}
+		tripID := models.TripID{
+			RouteID:   req.TripID.RouteID,
+			StartTime: startTime,
+		}
+
+		// Parse Cart operation time.
+		operationTime, err := time.Parse(time.RFC3339, req.CartID.OperationTime)
+		if err != nil {
+			return nil, errors.New("invalid operation_time format; must be RFC3339")
+		}
+		cartID := models.CartID{
+			EmployeeID:    req.CartID.EmployeeID,
+			OperationTime: operationTime,
+		}
+
+		// Call the service method.
+		err = svc.DeleteItemFromCart(ctx, &tripID, &cartID, &req.ProductID)
+		if err != nil {
+			return nil, err
+		}
+
+		return schemas.DeleteItemFromCartResponse{
+			Message: "Item deleted successfully",
+		}, nil
+	}
+}
+
 // mapDomainCartToSchemaCart converts a domain Cart (models.Cart) into a schema Cart (schemas.Cart).
 func mapDomainCartToSchemaCart(cart models.Cart) schemas.Cart {
 	return schemas.Cart{
