@@ -140,7 +140,7 @@ func (r *SalesRepository) UpdateItemQuantity(ctx context.Context, tripID *models
 		return err
 	}
 	if !applied {
-		return fmt.Errorf("Transaction does not exist")
+		return fmt.Errorf("transaction does not exist")
 	}
 
 	return nil
@@ -161,7 +161,7 @@ func (r *SalesRepository) DeleteItemFromCart(ctx context.Context, tripID *models
 	}
 
 	if !deleted {
-		return fmt.Errorf("Item doesnt exist")
+		return fmt.Errorf("item does not exist")
 	}
 
 	return nil

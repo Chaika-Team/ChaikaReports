@@ -192,6 +192,10 @@ func MakeDeleteItemFromCartEndpoint(svc service.SalesService) endpoint.Endpoint 
 	}
 }
 
+/* - - - - HELPER FUNCTIONS - - - - */
+
+/* - - - - MAPPERS - - - - */
+
 // mapDomainCartToSchemaCart converts a domain Cart (models.Cart) into a schema Cart (schemas.Cart).
 func mapDomainCartToSchemaCart(cart models.Cart) schemas.Cart {
 	return schemas.Cart{

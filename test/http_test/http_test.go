@@ -36,7 +36,7 @@ func (m *MockSalesRepository) GetEmployeeCartsInTrip(ctx context.Context, tripID
 	return nil, args.Error(1)
 }
 
-func (m *MockSalesRepository) GetEmployeeIDsByTrip(tripID *models.TripID) ([]string, error) {
+func (m *MockSalesRepository) GetEmployeeIDsByTrip(ctx context.Context, tripID *models.TripID) ([]string, error) {
 	args := m.Called(tripID)
 	if args.Get(0) != nil {
 		return args.Get(0).([]string), args.Error(1)
@@ -44,12 +44,12 @@ func (m *MockSalesRepository) GetEmployeeIDsByTrip(tripID *models.TripID) ([]str
 	return nil, args.Error(1)
 }
 
-func (m *MockSalesRepository) UpdateItemQuantity(tripID *models.TripID, cartID *models.CartID, productID *int, newQuantity *int16) error {
+func (m *MockSalesRepository) UpdateItemQuantity(ctx context.Context, tripID *models.TripID, cartID *models.CartID, productID *int, newQuantity *int16) error {
 	args := m.Called(tripID, cartID, productID, newQuantity)
 	return args.Error(0)
 }
 
-func (m *MockSalesRepository) DeleteItemFromCart(tripID *models.TripID, cartID *models.CartID, productID *int) error {
+func (m *MockSalesRepository) DeleteItemFromCart(ctx context.Context, tripID *models.TripID, cartID *models.CartID, productID *int) error {
 	args := m.Called(tripID, cartID, productID)
 	return args.Error(0)
 }

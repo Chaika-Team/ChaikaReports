@@ -6,7 +6,7 @@ type TripID struct {
 	StartTime string `json:"start_time" validate:"required,datetime=2006-01-02T15:04:05Z07:00"`
 }
 
-// CartSchema represents each cart in the request
+// Cart represents each cart in the request
 type Cart struct {
 	CartID        CartID `json:"cart_id" validate:"required"`
 	OperationType int8   `json:"operation_type" validate:"required"`
@@ -19,7 +19,7 @@ type CartID struct {
 	OperationTime string `json:"operation_time" validate:"required,datetime=2006-01-02T15:04:05Z07:00"`
 }
 
-// ItemSchema represents each item in the cart
+// Item represents each item in the cart
 type Item struct {
 	ProductID int   `json:"product_id" validate:"required"`
 	Quantity  int16 `json:"quantity" validate:"required"`

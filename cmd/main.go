@@ -36,7 +36,6 @@ func main() {
 	if configPath == "" {
 		configPath = "config.yml"
 	}
-	cfg, _ := config.LoadConfig(configPath)
 
 	// Initialize logger
 	logger := log.NewLogfmtLogger(log.StdlibWriter{})
@@ -51,7 +50,7 @@ func main() {
 	// Initialize Cassandra session
 	session, err := cassandra.InitCassandra(logger, cfg.Cassandra.Keyspace, cfg.Cassandra.Hosts, cfg.Cassandra.User, cfg.Cassandra.Password, cfg.Cassandra.Timeout, cfg.Cassandra.RetryDelay, cfg.Cassandra.RetryAttempts)
 	if err != nil {
-		logger.Log("error", "Failed to initialize Cassandra", "err", err)
+		_ = logger.Log("error", "Failed to initialize Cassandra", "err", err)
 		return
 	}
 	defer cassandra.CloseCassandra(session)
@@ -76,7 +75,7 @@ func main() {
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
-		logger.Log("msg", fmt.Sprintf("Starting server on %s", srv.Addr))
+		_ = logger.Log("msg", fmt.Sprintf("Starting server on %s", srv.Addr))
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			_ = logger.Log("error", "Failed to start server", "err", err)
 			done <- os.Interrupt
