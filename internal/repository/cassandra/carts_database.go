@@ -161,7 +161,7 @@ func (r *SalesRepository) DeleteItemFromCart(ctx context.Context, tripID *models
 	}
 
 	if !deleted {
-		return fmt.Errorf("Item doesnt exist")
+		return fmt.Errorf("Item does not exist")
 	}
 
 	return nil
