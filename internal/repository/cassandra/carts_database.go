@@ -83,7 +83,7 @@ func (r *SalesRepository) GetEmployeeCartsInTrip(ctx context.Context, tripID *mo
 	iter := r.session.Query(getEmployeeCartsInTripQuery,
 		&tripID.RouteID,
 		&tripID.StartTime,
-		&employeeID).Iter()
+		&employeeID).WithContext(ctx).Iter()
 
 	carts, err := aggregateCartsFromRows(iter, *employeeID)
 	if err != nil {
@@ -104,7 +104,7 @@ func (r *SalesRepository) GetEmployeeCartsInTrip(ctx context.Context, tripID *mo
 func (r *SalesRepository) GetEmployeeIDsByTrip(ctx context.Context, tripID *models.TripID) ([]string, error) {
 	iter := r.session.Query(getEmployeeIdsByTripQuery,
 		&tripID.RouteID,
-		&tripID.StartTime).Iter()
+		&tripID.StartTime).WithContext(ctx).Iter()
 
 	// Making a map to get unique ID's since Cassandra only allows DISTINCT for partition keys
 	uniqueIDs := make(map[string]struct{})
@@ -133,7 +133,7 @@ func (r *SalesRepository) UpdateItemQuantity(ctx context.Context, tripID *models
 		tripID.StartTime,
 		cartID.EmployeeID,
 		cartID.OperationTime,
-		productID).ScanCAS()
+		productID).WithContext(ctx).ScanCAS()
 
 	if err != nil {
 		_ = r.log.Log("error", fmt.Sprintf("Failed to update item quantity %v", err))
@@ -153,7 +153,7 @@ func (r *SalesRepository) DeleteItemFromCart(ctx context.Context, tripID *models
 		tripID.StartTime,
 		cartID.EmployeeID,
 		cartID.OperationTime,
-		productID).ScanCAS()
+		productID).WithContext(ctx).ScanCAS()
 
 	if err != nil {
 		_ = r.log.Log("error", fmt.Sprintf("Failed to delete item in cart %v", err))
