@@ -23,7 +23,8 @@ import (
 // @Failure      500      {object}  schemas.ErrorResponse       "Internal server error"
 // @Router       /sales [post]
 
-const timeFormatErrorMessage = "invalid start_time format; must be RFC3339"
+const invalidStartTimeErrorMessage = "invalid start_time format; must be RFC3339"
+const invalidOperationTimeErrorMessage = "invalid operation_time format; must be RFC3339"
 const invalidRequestTypeErrorMessage = "invalid request type"
 
 // MakeInsertSalesEndpoint creates the insert sales endpoint
@@ -55,7 +56,7 @@ func MakeGetEmployeeCartsInTripEndpoint(svc service.SalesService) endpoint.Endpo
 		// Parse the trip's start time.
 		startTime, err := time.Parse(time.RFC3339, req.TripID.StartTime)
 		if err != nil {
-			return nil, errors.New(timeFormatErrorMessage)
+			return nil, errors.New(invalidStartTimeErrorMessage)
 		}
 
 		// Build the domain TripID.
@@ -93,7 +94,7 @@ func MakeGetEmployeeIDsByTripEndpoint(svc service.SalesService) endpoint.Endpoin
 		// Parse the trip's start time.
 		startTime, err := time.Parse(time.RFC3339, req.TripID.StartTime)
 		if err != nil {
-			return nil, errors.New(timeFormatErrorMessage)
+			return nil, errors.New(invalidStartTimeErrorMessage)
 		}
 
 		// Build the domain TripID.
@@ -125,7 +126,7 @@ func MakeUpdateItemQuantityEndpoint(svc service.SalesService) endpoint.Endpoint 
 		// Parse TripID StartTime from string to time.Time.
 		startTime, err := time.Parse(time.RFC3339, req.TripID.StartTime)
 		if err != nil {
-			return nil, errors.New(timeFormatErrorMessage)
+			return nil, errors.New(invalidStartTimeErrorMessage)
 		}
 
 		tripID := models.TripID{
@@ -136,7 +137,7 @@ func MakeUpdateItemQuantityEndpoint(svc service.SalesService) endpoint.Endpoint 
 		// Parse CartID OperationTime from string to time.Time.
 		operationTime, err := time.Parse(time.RFC3339, req.CartID.OperationTime)
 		if err != nil {
-			return nil, errors.New(timeFormatErrorMessage)
+			return nil, errors.New(invalidOperationTimeErrorMessage)
 		}
 
 		cartID := models.CartID{
@@ -166,7 +167,7 @@ func MakeDeleteItemFromCartEndpoint(svc service.SalesService) endpoint.Endpoint 
 		// Parse Trip start time.
 		startTime, err := time.Parse(time.RFC3339, req.TripID.StartTime)
 		if err != nil {
-			return nil, errors.New(timeFormatErrorMessage)
+			return nil, errors.New(invalidStartTimeErrorMessage)
 		}
 		tripID := models.TripID{
 			RouteID:   req.TripID.RouteID,
@@ -176,7 +177,7 @@ func MakeDeleteItemFromCartEndpoint(svc service.SalesService) endpoint.Endpoint 
 		// Parse Cart operation time.
 		operationTime, err := time.Parse(time.RFC3339, req.CartID.OperationTime)
 		if err != nil {
-			return nil, errors.New(timeFormatErrorMessage)
+			return nil, errors.New("invalid operation_time format; must be RFC3339")
 		}
 		cartID := models.CartID{
 			EmployeeID:    req.CartID.EmployeeID,
