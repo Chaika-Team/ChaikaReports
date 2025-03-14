@@ -79,8 +79,8 @@ jobs:
           args: >
             -Dsonar.projectKey=ChaikaReports
             -Dsonar.sources=./internal,./cmd
-            -Dsonar.tests=./tests
-            -Dsonar.exclusions=**/tests/**,**/*.mock.go,**/*test.go
+            -Dsonar.tests=./test
+            -Dsonar.exclusions=**/test/**,**/*.mock.go,**/*test.go
             -Dsonar.go.coverage.reportPaths=coverage.out
 
       - name: SonarQube QualityGate 
