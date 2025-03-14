@@ -12,11 +12,13 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
+const invalidRequestBodyErrorMessage = "invalid request body"
+
 // DecodeInsertSalesRequest decodes the HTTP request into the domain model
 func DecodeInsertSalesRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	var req schemas.InsertSalesRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.New("invalid request body")
+		return nil, errors.New(invalidRequestBodyErrorMessage)
 	}
 
 	// Validate the request
@@ -121,7 +123,7 @@ func DecodeGetEmployeeIDsByTripRequest(_ context.Context, r *http.Request) (inte
 func DecodeUpdateItemQuantityRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	var req schemas.UpdateItemQuantityRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.New("invalid request body")
+		return nil, errors.New(invalidRequestBodyErrorMessage)
 	}
 	return req, nil
 }
@@ -129,7 +131,7 @@ func DecodeUpdateItemQuantityRequest(_ context.Context, r *http.Request) (interf
 func DecodeDeleteItemFromCartRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	var req schemas.DeleteItemFromCartRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.New("invalid request body")
+		return nil, errors.New(invalidRequestBodyErrorMessage)
 	}
 	return req, nil
 }
