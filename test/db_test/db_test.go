@@ -209,3 +209,85 @@ func TestGetEmployeeCartsInTrip(t *testing.T) {
 		assert.True(t, found, "Expected cart not found: %+v", expectedCart)
 	}
 }
+
+func TestGetEmployeeIDsByTrip(t *testing.T) {
+	// Using the same trip as inserted in TestInsert.
+	tripID := models.TripID{
+		RouteID:   "route_test",
+		StartTime: time.Date(2023, 1, 15, 10, 0, 1, 0, time.UTC),
+	}
+
+	employeeIDs, err := testRepo.GetEmployeeIDsByTrip(ctx, &tripID)
+	assert.NoError(t, err, "Failed to get employee IDs by trip")
+
+	// In our inserted data we expect two employee IDs: "67890" and "98765".
+	expectedIDs := []string{"67890", "98765"}
+	assert.ElementsMatch(t, expectedIDs, employeeIDs, "Employee IDs should match expected values")
+}
+
+func TestUpdateItemQuantity(t *testing.T) {
+	// Choose an item that exists in the inserted data.
+	// For example, employee "67890" has a cart at 12:30:00 with product id 1, originally quantity 10.
+	tripID := models.TripID{
+		RouteID:   "route_test",
+		StartTime: time.Date(2023, 1, 15, 10, 0, 1, 0, time.UTC),
+	}
+	cartID := models.CartID{
+		EmployeeID:    "67890",
+		OperationTime: time.Date(2023, 1, 15, 12, 30, 0, 0, time.UTC),
+	}
+	productID := 1
+	newQuantity := int16(15)
+
+	// Update the quantity.
+	err := testRepo.UpdateItemQuantity(ctx, &tripID, &cartID, &productID, &newQuantity)
+	assert.NoError(t, err, "UpdateItemQuantity should not error")
+
+	// Retrieve the carts for employee "67890" and verify the update.
+	carts, err := testRepo.GetEmployeeCartsInTrip(ctx, &tripID, &cartID.EmployeeID)
+	assert.NoError(t, err, "Failed to get employee carts after update")
+
+	updated := false
+	for _, cart := range carts {
+		if cart.CartID.EmployeeID == cartID.EmployeeID && cart.CartID.OperationTime.Equal(cartID.OperationTime) {
+			for _, item := range cart.Items {
+				if item.ProductID == productID {
+					assert.Equal(t, newQuantity, item.Quantity, "Quantity should be updated")
+					updated = true
+					break
+				}
+			}
+		}
+	}
+	assert.True(t, updated, "Updated item should be found in the cart")
+}
+
+func TestDeleteItemFromCart(t *testing.T) {
+	// Choose an item that exists.
+	// For example, employee "98765" has a cart at 12:50:00 with product id 10.
+	tripID := models.TripID{
+		RouteID:   "route_test",
+		StartTime: time.Date(2023, 1, 15, 10, 0, 1, 0, time.UTC),
+	}
+	cartID := models.CartID{
+		EmployeeID:    "98765",
+		OperationTime: time.Date(2023, 1, 15, 12, 50, 0, 0, time.UTC),
+	}
+	productID := 10
+
+	// Delete the item.
+	err := testRepo.DeleteItemFromCart(ctx, &tripID, &cartID, &productID)
+	assert.NoError(t, err, "DeleteItemFromCart should not error")
+
+	// Retrieve the carts for employee "98765" and check that productID 10 is no longer present.
+	carts, err := testRepo.GetEmployeeCartsInTrip(ctx, &tripID, &cartID.EmployeeID)
+	assert.NoError(t, err, "Failed to get employee carts after deletion")
+
+	for _, cart := range carts {
+		if cart.CartID.EmployeeID == cartID.EmployeeID && cart.CartID.OperationTime.Equal(cartID.OperationTime) {
+			for _, item := range cart.Items {
+				assert.NotEqual(t, productID, item.ProductID, "Deleted product should not be present in the cart")
+			}
+		}
+	}
+}
