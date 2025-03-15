@@ -35,7 +35,8 @@ func MakeInsertSalesEndpoint(svc service.SalesService) endpoint.Endpoint {
 			return nil, errors.New(invalidRequestTypeErrorMessage)
 		}
 
-		if err := svc.InsertData(ctx, carriage); err != nil {
+		err := svc.InsertData(ctx, carriage)
+		if err != nil {
 			return nil, err
 		}
 
