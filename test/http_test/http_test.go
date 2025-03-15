@@ -204,7 +204,25 @@ func TestInsertSalesEndpoint(t *testing.T) {
 	}
 }
 
-// TestGetEmployeeCartsInTripEndpoint tests the GET /api/v1/sales/trip/cart/employee endpoint.
+func TestInsertSalesEndpoint_InvalidRequestType(t *testing.T) {
+	// Create a mock repository and a service based on it.
+	mockRepo := &MockSalesRepository{}
+	svc := service.NewSalesService(mockRepo)
+
+	// Build the InsertSales endpoint.
+	endpoint := httphandler.MakeInsertSalesEndpoint(svc)
+
+	// Call the endpoint with an invalid request type (a string instead of *models.Carriage).
+	resp, err := endpoint(context.Background(), "this is not a carriage")
+
+	// Expect a nil response and an error indicating "invalid request type".
+	assert.Nil(t, resp)
+	assert.EqualError(t, err, "invalid request type")
+
+	// Assert that InsertData was never called.
+	mockRepo.AssertNotCalled(t, "InsertData", mock.Anything, mock.Anything)
+}
+
 // TestGetEmployeeCartsInTripEndpoint tests the GET /api/v1/sales/trip/cart/employee endpoint.
 func TestGetEmployeeCartsInTripEndpoint(t *testing.T) {
 	tests := []struct {
@@ -353,6 +371,25 @@ func TestGetEmployeeCartsInTripEndpoint(t *testing.T) {
 	}
 }
 
+func TestGetEmployeeCartsInTripEndpoint_InvalidRequestType(t *testing.T) {
+	// Create a mock repository and service.
+	mockRepo := &MockSalesRepository{}
+	svc := service.NewSalesService(mockRepo)
+
+	// Build the GetEmployeeCartsInTrip endpoint.
+	endpoint := httphandler.MakeGetEmployeeCartsInTripEndpoint(svc)
+
+	// Call the endpoint directly with an invalid request type (e.g. a string)
+	resp, err := endpoint(context.Background(), "this is not a valid GetEmployeeCartsInTrip request")
+
+	// Assert that no response is returned and the error matches our expected error.
+	assert.Nil(t, resp)
+	assert.EqualError(t, err, "invalid request type")
+
+	// Since the type assertion fails, the service method should never be called.
+	mockRepo.AssertNotCalled(t, "GetEmployeeCartsInTrip", mock.Anything, mock.Anything, mock.Anything)
+}
+
 func TestGetEmployeeIDsByTripEndpoint(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -471,6 +508,25 @@ func TestGetEmployeeIDsByTripEndpoint(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGetEmployeeIDsByTripEndpoint_InvalidRequestType(t *testing.T) {
+	// Create a mock repository and service.
+	mockRepo := &MockSalesRepository{}
+	svc := service.NewSalesService(mockRepo)
+
+	// Build the GetEmployeeIDsByTrip endpoint.
+	endpoint := httphandler.MakeGetEmployeeIDsByTripEndpoint(svc)
+
+	// Call the endpoint directly with an invalid request type (e.g., a string).
+	resp, err := endpoint(context.Background(), "this is not a valid GetEmployeeIDsByTrip request")
+
+	// Expect a nil response and an error indicating "invalid request type".
+	assert.Nil(t, resp)
+	assert.EqualError(t, err, "invalid request type")
+
+	// Assert that the repository's GetEmployeeIDsByTrip method was never called.
+	mockRepo.AssertNotCalled(t, "GetEmployeeIDsByTrip", mock.Anything, mock.Anything)
 }
 
 // TestUpdateItemQuantityEndpoint tests the PUT /api/v1/sales/trip/cart/item/quantity endpoint.
@@ -641,6 +697,25 @@ func TestUpdateItemQuantityEndpoint(t *testing.T) {
 	}
 }
 
+func TestUpdateItemQuantityEndpoint_InvalidRequestType(t *testing.T) {
+	// Create a mock repository and service.
+	mockRepo := &MockSalesRepository{}
+	svc := service.NewSalesService(mockRepo)
+
+	// Build the UpdateItemQuantity endpoint.
+	endpoint := httphandler.MakeUpdateItemQuantityEndpoint(svc)
+
+	// Call the endpoint directly with an invalid request type (e.g., a string).
+	resp, err := endpoint(context.Background(), "this is not a valid UpdateItemQuantity request")
+
+	// Expect a nil response and an error indicating "invalid request type".
+	assert.Nil(t, resp)
+	assert.EqualError(t, err, "invalid request type")
+
+	// Ensure the repository method is never called.
+	mockRepo.AssertNotCalled(t, "UpdateItemQuantity", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+}
+
 // TestDeleteItemFromCartEndpoint tests the DELETE /api/v1/sales/trip/cart/item endpoint.
 func TestDeleteItemFromCartEndpoint(t *testing.T) {
 	tests := []struct {
@@ -801,4 +876,23 @@ func TestDeleteItemFromCartEndpoint(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestDeleteItemFromCartEndpoint_InvalidRequestType(t *testing.T) {
+	// Create a mock repository and service.
+	mockRepo := &MockSalesRepository{}
+	svc := service.NewSalesService(mockRepo)
+
+	// Build the DeleteItemFromCart endpoint.
+	endpoint := httphandler.MakeDeleteItemFromCartEndpoint(svc)
+
+	// Call the endpoint directly with an invalid request type (e.g., a string).
+	resp, err := endpoint(context.Background(), "this is not a valid DeleteItemFromCart request")
+
+	// Expect a nil response and an error indicating "invalid request type".
+	assert.Nil(t, resp)
+	assert.EqualError(t, err, "invalid request type")
+
+	// Ensure the repository's DeleteItemFromCart method is never called.
+	mockRepo.AssertNotCalled(t, "DeleteItemFromCart", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 }
