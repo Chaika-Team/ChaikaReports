@@ -23,9 +23,11 @@ import (
 // @Failure      500      {object}  schemas.ErrorResponse       "Internal server error"
 // @Router       /sales [post]
 
-const invalidStartTimeErrorMessage = "invalid start_time format; must be RFC3339"
-const invalidOperationTimeErrorMessage = "invalid operation_time format; must be RFC3339"
-const invalidRequestTypeErrorMessage = "invalid request type"
+const (
+	invalidStartTimeErrorMessage     = "invalid start_time format; must be RFC3339"
+	invalidOperationTimeErrorMessage = "invalid operation_time format; must be RFC3339"
+	invalidRequestTypeErrorMessage   = "invalid request type"
+)
 
 // MakeInsertSalesEndpoint creates the insert sales endpoint
 func MakeInsertSalesEndpoint(svc service.SalesService) endpoint.Endpoint {
