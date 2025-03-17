@@ -10,6 +10,7 @@ type SalesService interface {
 	InsertData(ctx context.Context, carriageReport *models.Carriage) error
 	GetEmployeeCartsInTrip(ctx context.Context, tripID *models.TripID, employeeID *string) ([]models.Cart, error)
 	GetEmployeeIDsByTrip(ctx context.Context, tripID *models.TripID) ([]string, error)
+	GetEmployeeTrips(ctx context.Context, employeeID string, year string) ([]models.EmployeeTrip, error)
 	UpdateItemQuantity(ctx context.Context, tripID *models.TripID, cartID *models.CartID, productID *int, newQuantity *int16) error
 	DeleteItemFromCart(ctx context.Context, tripID *models.TripID, cartID *models.CartID, productID *int) error
 }
@@ -36,6 +37,10 @@ func (s *salesService) GetEmployeeCartsInTrip(ctx context.Context, tripID *model
 // GetEmployeeIDsByTrip Gets all employee ID's in trip
 func (s *salesService) GetEmployeeIDsByTrip(ctx context.Context, tripID *models.TripID) ([]string, error) {
 	return s.repo.GetEmployeeIDsByTrip(ctx, tripID)
+}
+
+func (s *salesService) GetEmployeeTrips(ctx context.Context, employeeID string, year string) ([]models.EmployeeTrip, error) {
+	return s.repo.GetEmployeeTrips(ctx, employeeID, year)
 }
 
 // UpdateItemQuantity Updates item quantity in cart

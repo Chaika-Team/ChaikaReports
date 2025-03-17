@@ -37,3 +37,11 @@ type CartID struct {
 	EmployeeID    string    `json:"employee_id"`
 	OperationTime time.Time `json:"operation_time"`
 }
+
+// EmployeeTrip is a domain model that represents a trip that an employee was in
+type EmployeeTrip struct {
+	EmployeeID string    `json:"employee_id"`
+	Year       string    `json:"year"`
+	TripID     TripID    `json:"trip_id"`
+	EndTime    time.Time `json:"end_time"`
+}

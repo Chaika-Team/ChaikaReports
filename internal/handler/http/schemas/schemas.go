@@ -1,5 +1,7 @@
 package schemas
 
+import "time"
+
 // TripID represents the trip identifier in the request
 type TripID struct {
 	RouteID   string `json:"route_id" validate:"required"`
@@ -24,6 +26,13 @@ type Item struct {
 	ProductID int   `json:"product_id" validate:"required"`
 	Quantity  int16 `json:"quantity" validate:"required"`
 	Price     int64 `json:"price" validate:"required,min=0"` //Storing price in kopeeks
+}
+
+type EmployeeTrip struct {
+	EmployeeID string    `json:"employee_id"`
+	Year       string    `json:"year"`
+	TripID     TripID    `json:"trip_id"`
+	EndTime    time.Time `json:"end_time"`
 }
 
 // InsertSalesRequest represents the request body for the POST /api/v1/sales endpoint
@@ -57,6 +66,15 @@ type GetEmployeeIDsByTripRequest struct {
 // GetEmployeeIDsByTripResponse represents the response with the list of employee IDs.
 type GetEmployeeIDsByTripResponse struct {
 	EmployeeIDs []string `json:"employee_ids"`
+}
+
+type GetEmployeeTripsRequest struct {
+	EmployeeID string `json:"employee_id" validate:"required"`
+	Year       string `json:"year" validate:"required"`
+}
+
+type GetEmployeeTripsResponse struct {
+	EmployeeTrips []EmployeeTrip `json:"employee_trips" validate:"required"`
 }
 
 type UpdateItemQuantityRequest struct {

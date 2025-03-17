@@ -120,6 +120,22 @@ func DecodeGetEmployeeIDsByTripRequest(_ context.Context, r *http.Request) (inte
 	return req, nil
 }
 
+func DecodeGetEmployeeTripsRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	query := r.URL.Query()
+	employeeID := query.Get("employee_id")
+	year := query.Get("year")
+
+	if employeeID == "" || year == "" {
+		return nil, errors.New("missing required query parameters: employee_id or year")
+	}
+
+	req := schemas.GetEmployeeTripsRequest{
+		EmployeeID: employeeID,
+		Year:       year,
+	}
+	return req, nil
+}
+
 func DecodeUpdateItemQuantityRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	var req schemas.UpdateItemQuantityRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

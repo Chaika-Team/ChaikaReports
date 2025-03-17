@@ -23,9 +23,11 @@ import (
 // @Failure      500      {object}  schemas.ErrorResponse       "Internal server error"
 // @Router       /sales [post]
 
-const invalidStartTimeErrorMessage = "invalid start_time format; must be RFC3339"
-const invalidOperationTimeErrorMessage = "invalid operation_time format; must be RFC3339"
-const invalidRequestTypeErrorMessage = "invalid request type"
+const (
+	invalidStartTimeErrorMessage     = "invalid start_time format; must be RFC3339"
+	invalidOperationTimeErrorMessage = "invalid operation_time format; must be RFC3339"
+	invalidRequestTypeErrorMessage   = "invalid request type"
+)
 
 // MakeInsertSalesEndpoint creates the insert sales endpoint
 func MakeInsertSalesEndpoint(svc service.SalesService) endpoint.Endpoint {
@@ -113,6 +115,44 @@ func MakeGetEmployeeIDsByTripEndpoint(svc service.SalesService) endpoint.Endpoin
 		// Build and return the response.
 		return schemas.GetEmployeeIDsByTripResponse{
 			EmployeeIDs: employeeIDs,
+		}, nil
+	}
+}
+
+// MakeGetEmployeeTripsEndpoint creates the endpoint for fetching an employee's trips.
+func MakeGetEmployeeTripsEndpoint(svc service.SalesService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		// Assert the request type to our schema type.
+		req, ok := request.(schemas.GetEmployeeTripsRequest)
+		if !ok {
+			return nil, errors.New("invalid request type")
+		}
+
+		// Call the service method to get the trips for the given employee and year.
+		trips, err := svc.GetEmployeeTrips(ctx, req.EmployeeID, req.Year)
+		if err != nil {
+			return nil, err
+		}
+
+		// Map each domain EmployeeTrip to the schema EmployeeTrip.
+		var schemaTrips []schemas.EmployeeTrip
+		for _, t := range trips {
+			// We need to convert the domain TripID.StartTime (assumed to be time.Time)
+			// into a string in RFC3339 format, as defined by the schema.
+			schemaTrip := schemas.EmployeeTrip{
+				EmployeeID: t.EmployeeID,
+				Year:       t.Year,
+				TripID: schemas.TripID{
+					RouteID:   t.TripID.RouteID,
+					StartTime: t.TripID.StartTime.Format(time.RFC3339),
+				},
+				EndTime: t.EndTime, // EndTime remains as time.Time per your schema.
+			}
+			schemaTrips = append(schemaTrips, schemaTrip)
+		}
+
+		return schemas.GetEmployeeTripsResponse{
+			EmployeeTrips: schemaTrips,
 		}, nil
 	}
 }

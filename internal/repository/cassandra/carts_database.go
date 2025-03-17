@@ -4,6 +4,7 @@ import (
 	"ChaikaReports/internal/models"
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/go-kit/log"
@@ -24,9 +25,27 @@ func NewSalesRepository(session *gocql.Session, logger log.Logger) *SalesReposit
 }
 
 const insertOperationQuery = `
-	INSERT INTO operations (route_id, start_time, end_time, carriage_id, 
-	employee_id, operation_type, operation_time, product_id, quantity, price)
+	INSERT INTO operations (
+		route_id,
+	    start_time,
+		end_time,
+	    carriage_id, 
+		employee_id,
+		operation_type,
+	    operation_time,
+		product_id,
+	    quantity,
+		price)
 	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+
+const insertEmployeeTripsQuery = `
+	INSERT INTO employee_trips (
+    	employee_id,
+    	year,
+		route_id,
+		start_time,
+		end_time)
+	VALUES (?, ?, ?, ?, ?)`
 
 const getEmployeeCartsInTripQuery = `SELECT operation_time, operation_type, product_id, quantity, price
 	FROM operations
@@ -38,6 +57,11 @@ const getEmployeeIdsByTripQuery = `SELECT employee_id
 	FROM operations 
 	WHERE route_id = ?
 	  AND start_time = ?`
+
+const getEmployeeTripsQuery = `SELECT route_id, start_time, end_time
+	FROM employee_trips
+	WHERE employee_id = ?
+      AND year = ?`
 
 const updateItemQuantityQuery = `UPDATE operations SET quantity = ? 
     WHERE route_id = ? 
@@ -53,6 +77,13 @@ const deleteItemFromCartQuery = `DELETE FROM operations WHERE route_id = ? AND s
 func (r *SalesRepository) InsertData(ctx context.Context, carriageReport *models.Carriage) error {
 	batch := r.session.NewBatch(gocql.LoggedBatch).WithContext(ctx)
 	for _, cart := range carriageReport.Carts {
+		batch.Query(insertEmployeeTripsQuery,
+			&cart.CartID.EmployeeID,
+			strconv.Itoa(carriageReport.TripID.StartTime.Year()),
+			&carriageReport.TripID.RouteID,
+			&carriageReport.TripID.StartTime,
+			&carriageReport.EndTime,
+		)
 		for _, item := range cart.Items {
 			// Batch query allows to save data integrity by stopping transaction if at least one insertion fails
 			batch.Query(insertOperationQuery,
@@ -124,6 +155,36 @@ func (r *SalesRepository) GetEmployeeIDsByTrip(ctx context.Context, tripID *mode
 	}
 
 	return employeeIDs, nil
+}
+
+func (r *SalesRepository) GetEmployeeTrips(ctx context.Context, employeeID string, year string) ([]models.EmployeeTrip, error) {
+	iter := r.session.Query(getEmployeeTripsQuery,
+		employeeID,
+		year).WithContext(ctx).Iter()
+
+	var routeID string
+	var startTime, endTime time.Time
+	var employeeTrips []models.EmployeeTrip
+
+	for iter.Scan(&routeID, &startTime, &endTime) {
+		employeeTrip := models.EmployeeTrip{
+			EmployeeID: employeeID,
+			Year:       year,
+			TripID: models.TripID{
+				RouteID:   routeID,
+				StartTime: startTime,
+			},
+			EndTime: endTime,
+		}
+		employeeTrips = append(employeeTrips, employeeTrip)
+	}
+
+	if err := iter.Close(); err != nil {
+		_ = r.log.Log("error", fmt.Sprintf("Failed to get employee trips: %v", err))
+		return nil, err
+	}
+
+	return employeeTrips, nil
 }
 
 // UpdateItemQuantity Updates quantity of items in cart
