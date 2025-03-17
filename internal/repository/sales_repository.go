@@ -15,6 +15,8 @@ type SalesRepository interface {
 	// GetEmployeeIDsByTrip Gets all employees in trip
 	GetEmployeeIDsByTrip(ctx context.Context, tripID *models.TripID) ([]string, error)
 
+	GetEmployeeTrips(ctx context.Context, employeeID string, year string) ([]models.EmployeeTrip, error)
+
 	// UpdateItemQuantity Updates item quantity in cart
 	UpdateItemQuantity(ctx context.Context, tripID *models.TripID, cartID *models.CartID, productID *int, newQuantity *int16) error
 

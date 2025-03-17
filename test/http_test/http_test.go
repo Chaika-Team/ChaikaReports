@@ -46,6 +46,14 @@ func (m *MockSalesRepository) GetEmployeeIDsByTrip(ctx context.Context, tripID *
 	return nil, args.Error(1)
 }
 
+func (m *MockSalesRepository) GetEmployeeTrips(ctx context.Context, employeeID string, year string) ([]models.EmployeeTrip, error) {
+	args := m.Called(ctx, employeeID, year)
+	if args.Get(0) != nil {
+		return args.Get(0).([]models.EmployeeTrip), args.Error(1)
+	}
+	return nil, args.Error(1)
+}
+
 func (m *MockSalesRepository) UpdateItemQuantity(ctx context.Context, tripID *models.TripID, cartID *models.CartID, productID *int, newQuantity *int16) error {
 	args := m.Called(ctx, tripID, cartID, productID, newQuantity)
 	return args.Error(0)
@@ -527,6 +535,145 @@ func TestGetEmployeeIDsByTripEndpoint_InvalidRequestType(t *testing.T) {
 
 	// Assert that the repository's GetEmployeeIDsByTrip method was never called.
 	mockRepo.AssertNotCalled(t, "GetEmployeeIDsByTrip", mock.Anything, mock.Anything)
+}
+
+func TestGetEmployeeTripsEndpoint(t *testing.T) {
+	tests := []struct {
+		name           string
+		queryParams    map[string]string
+		mockSetup      func(m *MockSalesRepository)
+		expectedStatus int
+		expectedBody   interface{}
+	}{
+		{
+			name: "Successful Get",
+			queryParams: map[string]string{
+				"employee_id": "emp1",
+				"year":        "2023",
+			},
+			mockSetup: func(m *MockSalesRepository) {
+				// Create a sample trip returned by the repository.
+				sampleTrip := models.EmployeeTrip{
+					EmployeeID: "emp1",
+					Year:       "2023",
+					TripID: models.TripID{
+						RouteID:   "route_test",
+						StartTime: time.Date(2023, 1, 15, 10, 0, 1, 0, time.UTC),
+					},
+					EndTime: time.Date(2023, 1, 15, 11, 0, 1, 0, time.UTC),
+				}
+				m.On("GetEmployeeTrips", mock.Anything, "emp1", "2023").
+					Return([]models.EmployeeTrip{sampleTrip}, nil)
+			},
+			expectedStatus: http.StatusOK,
+			expectedBody: schemas.GetEmployeeTripsResponse{
+				EmployeeTrips: []schemas.EmployeeTrip{
+					{
+						EmployeeID: "emp1",
+						Year:       "2023",
+						TripID: schemas.TripID{
+							RouteID: "route_test",
+							// Domain time is converted to RFC3339 string.
+							StartTime: "2023-01-15T10:00:01Z",
+						},
+						// EndTime remains as a time.Time in the schema.
+						EndTime: time.Date(2023, 1, 15, 11, 0, 1, 0, time.UTC),
+					},
+				},
+			},
+		},
+		{
+			name: "Missing Query Parameters",
+			queryParams: map[string]string{
+				"year": "2023", // Missing employee_id.
+			},
+			mockSetup:      func(m *MockSalesRepository) {},
+			expectedStatus: http.StatusBadRequest,
+			expectedBody: schemas.ErrorResponse{
+				Error: "missing required query parameters: employee_id or year",
+			},
+		},
+		{
+			name: "Repository Error",
+			queryParams: map[string]string{
+				"employee_id": "emp1",
+				"year":        "2023",
+			},
+			mockSetup: func(m *MockSalesRepository) {
+				m.On("GetEmployeeTrips", mock.Anything, "emp1", "2023").
+					Return(nil, errors.New("database error"))
+			},
+			expectedStatus: http.StatusBadRequest,
+			expectedBody: schemas.ErrorResponse{
+				Error: "database error",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Initialize the mock repository and set up expectations.
+			mockRepo := &MockSalesRepository{}
+			tt.mockSetup(mockRepo)
+
+			// Create the service and HTTP handler.
+			svc := service.NewSalesService(mockRepo)
+			handler := httphandler.NewHTTPHandler(svc, log.NewNopLogger())
+
+			// Create a new GET request.
+			req, err := http.NewRequest("GET", "/api/v1/sales/trip/employee_trips", nil)
+			assert.NoError(t, err, "Failed to create new GET request")
+
+			// Set the query parameters.
+			q := req.URL.Query()
+			for key, value := range tt.queryParams {
+				q.Set(key, value)
+			}
+			req.URL.RawQuery = q.Encode()
+
+			// Create a ResponseRecorder to capture the response.
+			rr := httptest.NewRecorder()
+			handler.ServeHTTP(rr, req)
+
+			// Assert that the returned status code is as expected.
+			assert.Equal(t, tt.expectedStatus, rr.Code, "Unexpected status code")
+
+			// Read and compare the response body.
+			body, err := io.ReadAll(rr.Body)
+			assert.NoError(t, err, "Failed to read response body")
+			expectedBodyJSON, _ := json.Marshal(tt.expectedBody)
+			assert.JSONEq(t, string(expectedBodyJSON), string(body), "Response body does not match")
+
+			// Determine if the repository should have been called.
+			empID, hasEmp := tt.queryParams["employee_id"]
+			year, hasYear := tt.queryParams["year"]
+
+			if hasEmp && empID != "" && hasYear && year != "" {
+				mockRepo.AssertCalled(t, "GetEmployeeTrips", mock.Anything, empID, year)
+			} else {
+				mockRepo.AssertNotCalled(t, "GetEmployeeTrips", mock.Anything, mock.Anything, mock.Anything)
+			}
+		})
+	}
+}
+
+func TestGetEmployeeTripsEndpoint_InvalidRequestType(t *testing.T) {
+	// Create a mock repository and service.
+	mockRepo := &MockSalesRepository{}
+	svc := service.NewSalesService(mockRepo)
+
+	// Build the GetEmployeeTrips endpoint.
+	endpoint := httphandler.MakeGetEmployeeTripsEndpoint(svc)
+
+	// Call the endpoint directly with an invalid request type (e.g., a string).
+	resp, err := endpoint(context.Background(), "this is not a valid GetEmployeeTrips request")
+
+	// Expect a nil response and an error indicating "invalid request type".
+	assert.Nil(t, resp)
+	assert.EqualError(t, err, "invalid request type")
+
+	// Assert that the repository's GetEmployeeTrips method was never called.
+	mockRepo.AssertNotCalled(t, "GetEmployeeTrips", mock.Anything, mock.Anything, mock.Anything)
 }
 
 // TestUpdateItemQuantityEndpoint tests the PUT /api/v1/sales/trip/cart/item/quantity endpoint.
