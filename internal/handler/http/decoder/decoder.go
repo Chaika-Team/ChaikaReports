@@ -12,11 +12,13 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
+const invalidRequestBodyErrorMessage = "invalid request body"
+
 // DecodeInsertSalesRequest decodes the HTTP request into the domain model
 func DecodeInsertSalesRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	var req schemas.InsertSalesRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.New("invalid request body")
+		return nil, errors.New(invalidRequestBodyErrorMessage)
 	}
 
 	// Validate the request
@@ -78,4 +80,74 @@ func DecodeInsertSalesRequest(_ context.Context, r *http.Request) (interface{}, 
 	}
 
 	return carriage, nil
+}
+
+func DecodeGetEmployeeCartsInTripRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	query := r.URL.Query()
+	routeID := query.Get("route_id")
+	startTime := query.Get("start_time")
+	employeeID := query.Get("employee_id")
+
+	if routeID == "" || startTime == "" || employeeID == "" {
+		return nil, errors.New("missing one or more required query parameters: route_id, start_time, employee_id")
+	}
+
+	req := schemas.GetEmployeeCartsInTripRequest{
+		TripID: schemas.TripID{
+			RouteID:   routeID,
+			StartTime: startTime,
+		},
+		EmployeeID: employeeID,
+	}
+	return req, nil
+}
+
+func DecodeGetEmployeeIDsByTripRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	query := r.URL.Query()
+	routeID := query.Get("route_id")
+	startTime := query.Get("start_time")
+
+	if routeID == "" || startTime == "" {
+		return nil, errors.New("missing required query parameters: route_id and start_time")
+	}
+
+	req := schemas.GetEmployeeIDsByTripRequest{
+		TripID: schemas.TripID{
+			RouteID:   routeID,
+			StartTime: startTime,
+		},
+	}
+	return req, nil
+}
+
+func DecodeGetEmployeeTripsRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	query := r.URL.Query()
+	employeeID := query.Get("employee_id")
+	year := query.Get("year")
+
+	if employeeID == "" || year == "" {
+		return nil, errors.New("missing required query parameters: employee_id or year")
+	}
+
+	req := schemas.GetEmployeeTripsRequest{
+		EmployeeID: employeeID,
+		Year:       year,
+	}
+	return req, nil
+}
+
+func DecodeUpdateItemQuantityRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	var req schemas.UpdateItemQuantityRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, errors.New(invalidRequestBodyErrorMessage)
+	}
+	return req, nil
+}
+
+func DecodeDeleteItemFromCartRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	var req schemas.DeleteItemFromCartRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, errors.New(invalidRequestBodyErrorMessage)
+	}
+	return req, nil
 }

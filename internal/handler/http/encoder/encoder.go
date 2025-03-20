@@ -12,12 +12,28 @@ import (
 // EncodeResponse encodes the domain response into an HTTP response
 func EncodeResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
 	w.Header().Set("Content-Type", "application/json")
-	if res, ok := response.(schemas.InsertSalesResponse); ok {
+	switch res := response.(type) {
+	case schemas.InsertSalesResponse:
 		w.WriteHeader(http.StatusOK)
 		return json.NewEncoder(w).Encode(res)
+	case schemas.GetEmployeeCartsInTripResponse:
+		w.WriteHeader(http.StatusOK)
+		return json.NewEncoder(w).Encode(res)
+	case schemas.GetEmployeeIDsByTripResponse:
+		w.WriteHeader(http.StatusOK)
+		return json.NewEncoder(w).Encode(res)
+	case schemas.GetEmployeeTripsResponse:
+		w.WriteHeader(http.StatusOK)
+		return json.NewEncoder(w).Encode(res)
+	case schemas.UpdateItemQuantityResponse:
+		w.WriteHeader(http.StatusOK)
+		return json.NewEncoder(w).Encode(res)
+	case schemas.DeleteItemFromCartResponse:
+		w.WriteHeader(http.StatusOK)
+		return json.NewEncoder(w).Encode(res)
+	default:
+		return fmt.Errorf("unknown response type: %T", response)
 	}
-	// Handle other response types if necessary
-	return fmt.Errorf("unknown response type: %T", response)
 }
 
 // EncodeError encodes errors into an HTTP error response

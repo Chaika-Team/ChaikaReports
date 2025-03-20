@@ -34,18 +34,23 @@ import (
 func main() {
 	configPath := os.Getenv("CONFIG_PATH")
 	if configPath == "" {
-		configPath = "../../config.yml"
+		configPath = "config.yml"
 	}
-	cfg, _ := config.LoadConfig(configPath)
 
 	// Initialize logger
 	logger := log.NewLogfmtLogger(log.StdlibWriter{})
 	logger = log.With(logger, "ts", log.DefaultTimestampUTC, "caller", log.DefaultCaller)
 
+	cfg, err := config.LoadConfig(configPath)
+	if err != nil {
+		panic(fmt.Sprintf("failed to load config: %v", err))
+	}
+	fmt.Printf("Loaded config: %+v\n", cfg)
+
 	// Initialize Cassandra session
 	session, err := cassandra.InitCassandra(logger, cfg.Cassandra.Keyspace, cfg.Cassandra.Hosts, cfg.Cassandra.User, cfg.Cassandra.Password, cfg.Cassandra.Timeout, cfg.Cassandra.RetryDelay, cfg.Cassandra.RetryAttempts)
 	if err != nil {
-		logger.Log("error", "Failed to initialize Cassandra", "err", err)
+		_ = logger.Log("error", "Failed to initialize Cassandra", "err", err)
 		return
 	}
 	defer cassandra.CloseCassandra(session)
@@ -62,7 +67,7 @@ func main() {
 	// Start HTTP server
 	// Create server with configurable port
 	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%d", cfg.Server.Port),
+		Addr:    fmt.Sprintf(":%s", cfg.Server.Port),
 		Handler: handler,
 	}
 
@@ -70,22 +75,22 @@ func main() {
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
-		logger.Log("msg", fmt.Sprintf("Starting server on %s", srv.Addr))
+		_ = logger.Log("msg", fmt.Sprintf("Starting server on %s", srv.Addr))
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.Log("error", "Failed to start server", "err", err)
+			_ = logger.Log("error", "Failed to start server", "err", err)
 			done <- os.Interrupt
 		}
 	}()
 
 	<-done
-	logger.Log("msg", "Server stopping")
+	_ = logger.Log("msg", "Server stopping")
 
 	ctx, cancel := context.WithTimeout(context.Background(), cfg.Server.Timeout*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(ctx); err != nil {
-		logger.Log("error", "Server shutdown failed", "err", err)
+		_ = logger.Log("error", "Server shutdown failed", "err", err)
 	}
 
-	logger.Log("msg", "Server stopped")
+	_ = logger.Log("msg", "Server stopped")
 }

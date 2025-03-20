@@ -30,7 +30,41 @@ func NewHTTPHandler(svc service.SalesService, logger log.Logger) http.Handler {
 		httptransport.ServerErrorEncoder(encoder.EncodeError(logger)),
 	)).Methods("POST")
 
-	// Add more routes as needed
+	// This expects GET with query parameters: route_id, start_time, and employee_id.
+	apiV1.Handle("/sales/trip/cart/employee", httptransport.NewServer(
+		MakeGetEmployeeCartsInTripEndpoint(svc),
+		decoder.DecodeGetEmployeeCartsInTripRequest,
+		encoder.EncodeResponse,
+		httptransport.ServerErrorEncoder(encoder.EncodeError(logger)),
+	)).Methods("GET")
+
+	apiV1.Handle("/sales/trip/employee_ids", httptransport.NewServer(
+		MakeGetEmployeeIDsByTripEndpoint(svc),
+		decoder.DecodeGetEmployeeIDsByTripRequest,
+		encoder.EncodeResponse,
+		httptransport.ServerErrorEncoder(encoder.EncodeError(logger)),
+	)).Methods("GET")
+
+	apiV1.Handle("/sales/trip/employee_trips", httptransport.NewServer(
+		MakeGetEmployeeTripsEndpoint(svc),
+		decoder.DecodeGetEmployeeTripsRequest,
+		encoder.EncodeResponse,
+		httptransport.ServerErrorEncoder(encoder.EncodeError(logger)),
+	)).Methods("GET")
+
+	apiV1.Handle("/sales/trip/cart/item/quantity", httptransport.NewServer(
+		MakeUpdateItemQuantityEndpoint(svc),
+		decoder.DecodeUpdateItemQuantityRequest,
+		encoder.EncodeResponse,
+		httptransport.ServerErrorEncoder(encoder.EncodeError(logger)),
+	)).Methods("PUT")
+
+	apiV1.Handle("/sales/trip/cart/item", httptransport.NewServer(
+		MakeDeleteItemFromCartEndpoint(svc),
+		decoder.DecodeDeleteItemFromCartRequest,
+		encoder.EncodeResponse,
+		httptransport.ServerErrorEncoder(encoder.EncodeError(logger)),
+	)).Methods("DELETE")
 
 	return r
 }

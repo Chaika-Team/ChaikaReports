@@ -10,14 +10,16 @@ type SalesRepository interface {
 	InsertData(ctx context.Context, carriageReport *models.Carriage) error
 
 	// GetEmployeeCartsInTrip Gets all carts employee has sold during trip, returns array of Carts
-	GetEmployeeCartsInTrip(tripID *models.TripID, employeeID *string) ([]models.Cart, error)
+	GetEmployeeCartsInTrip(ctx context.Context, tripID *models.TripID, employeeID *string) ([]models.Cart, error)
 
 	// GetEmployeeIDsByTrip Gets all employees in trip
-	GetEmployeeIDsByTrip(tripID *models.TripID) ([]string, error)
+	GetEmployeeIDsByTrip(ctx context.Context, tripID *models.TripID) ([]string, error)
+
+	GetEmployeeTrips(ctx context.Context, employeeID string, year string) ([]models.EmployeeTrip, error)
 
 	// UpdateItemQuantity Updates item quantity in cart
-	UpdateItemQuantity(tripID *models.TripID, cartID *models.CartID, productID *int, newQuantity *int16) error
+	UpdateItemQuantity(ctx context.Context, tripID *models.TripID, cartID *models.CartID, productID *int, newQuantity *int16) error
 
 	// DeleteItemFromCart Deletes item from cart
-	DeleteItemFromCart(tripID *models.TripID, cartID *models.CartID, productID *int) error
+	DeleteItemFromCart(ctx context.Context, tripID *models.TripID, cartID *models.CartID, productID *int) error
 }
