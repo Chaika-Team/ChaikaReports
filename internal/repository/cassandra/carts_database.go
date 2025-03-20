@@ -12,16 +12,15 @@ import (
 )
 
 type SalesRepository struct {
-	session *gocql.Session
+	session CassandraSession
 	log     log.Logger
 }
 
-func NewSalesRepository(session *gocql.Session, logger log.Logger) *SalesRepository {
+func NewSalesRepository(session CassandraSession, logger log.Logger) *SalesRepository {
 	return &SalesRepository{
 		session: session,
 		log:     logger,
 	}
-
 }
 
 const insertOperationQuery = `
@@ -100,10 +99,10 @@ func (r *SalesRepository) InsertData(ctx context.Context, carriageReport *models
 			)
 		}
 	}
-	if err := r.session.ExecuteBatch(batch); err != nil {
-		if logErr := r.log.Log("error", fmt.Sprintf("Failed to insert carriage trip info: %v", err)); logErr != nil {
-			return fmt.Errorf("failed to execute batch and log error: %v (log error: %v)", err, logErr)
-		}
+
+	err := r.session.ExecuteBatch(batch)
+	if err != nil {
+		_ = r.log.Log("error", fmt.Sprintf("Failed to insert carriage trip info: %v", err))
 		return fmt.Errorf("failed to execute batch: %w", err)
 	}
 	return nil
@@ -229,7 +228,7 @@ func (r *SalesRepository) DeleteItemFromCart(ctx context.Context, tripID *models
 }
 
 // Helper function to process rows and return an array of Carts
-func aggregateCartsFromRows(iter *gocql.Iter, employeeID string) ([]models.Cart, error) {
+func aggregateCartsFromRows(iter Iter, employeeID string) ([]models.Cart, error) {
 	cartMap := make(map[string]*models.Cart)
 
 	var operationTime time.Time

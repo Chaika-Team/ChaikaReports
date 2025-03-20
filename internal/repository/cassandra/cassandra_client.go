@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func InitCassandra(logger log.Logger, keyspace string, hosts []string, username, password string, timeout time.Duration, delay time.Duration, attempts int) (*gocql.Session, error) { //TODO Add connection retry
+func InitCassandra(logger log.Logger, keyspace string, hosts []string, username, password string, timeout time.Duration, delay time.Duration, attempts int) (CassandraSession, error) {
 	cluster := gocql.NewCluster(hosts...)
 	cluster.Keyspace = keyspace
 	cluster.Consistency = gocql.Quorum
@@ -15,7 +15,6 @@ func InitCassandra(logger log.Logger, keyspace string, hosts []string, username,
 		Username: username,
 		Password: password,
 	}
-	// Add retry logic
 	var session *gocql.Session
 	var err error
 	for i := 0; i < attempts; i++ {
@@ -32,16 +31,15 @@ func InitCassandra(logger log.Logger, keyspace string, hosts []string, username,
 		return nil, err
 	}
 
-	// Performing simple health check for Cassandra DB connection
 	if err := session.Query("SELECT now() FROM system.local").Exec(); err != nil {
 		_ = logger.Log("msg", "Cassandra health check failed", "error", err)
-		session.Close() // Close the session if the health check fails
+		session.Close()
 		return nil, err
 	}
 
-	return session, nil
+	return &realSession{s: session}, nil
 }
 
-func CloseCassandra(session *gocql.Session) {
+func CloseCassandra(session CassandraSession) {
 	session.Close()
 }
