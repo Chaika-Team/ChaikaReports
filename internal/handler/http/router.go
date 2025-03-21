@@ -30,7 +30,7 @@ func NewHTTPHandler(svc service.SalesService, logger log.Logger) http.Handler {
 		httptransport.ServerErrorEncoder(encoder.EncodeError(logger)),
 	)).Methods("POST")
 
-	// This expects GET with query parameters: route_id, start_time, and employee_id.
+	// This expects GET with query parameters: route_id, year, start_time, and employee_id.
 	apiV1.Handle("/sales/trip/cart/employee", httptransport.NewServer(
 		MakeGetEmployeeCartsInTripEndpoint(svc),
 		decoder.DecodeGetEmployeeCartsInTripRequest,
