@@ -244,6 +244,7 @@ func TestGetEmployeeCartsInTripEndpoint(t *testing.T) {
 			name: "Successful Get",
 			queryParams: map[string]string{
 				"route_id":    "route_test",
+				"year":        "2023",
 				"start_time":  "2023-01-15T10:00:01Z",
 				"employee_id": "emp1",
 			},
@@ -283,19 +284,21 @@ func TestGetEmployeeCartsInTripEndpoint(t *testing.T) {
 			name: "Missing Query Parameters",
 			queryParams: map[string]string{
 				"route_id":   "route_test",
+				"year":       "2023",
 				"start_time": "2023-01-15T10:00:01Z",
 				// "employee_id" is missing
 			},
 			mockSetup:      func(m *MockSalesRepository) {},
 			expectedStatus: http.StatusBadRequest,
 			expectedBody: schemas.ErrorResponse{
-				Error: "missing one or more required query parameters: route_id, start_time, employee_id",
+				Error: "missing one or more required query parameters: route_id, year, start_time, employee_id",
 			},
 		},
 		{
 			name: "Invalid StartTime Format",
 			queryParams: map[string]string{
 				"route_id":    "route_test",
+				"year":        "2023",
 				"start_time":  "invalid-time",
 				"employee_id": "emp1",
 			},
@@ -309,6 +312,7 @@ func TestGetEmployeeCartsInTripEndpoint(t *testing.T) {
 			name: "Repository Error",
 			queryParams: map[string]string{
 				"route_id":    "route_test",
+				"year":        "2023",
 				"start_time":  "2023-01-15T10:00:01Z",
 				"employee_id": "emp1",
 			},
@@ -410,6 +414,7 @@ func TestGetEmployeeIDsByTripEndpoint(t *testing.T) {
 			name: "Successful Get",
 			queryParams: map[string]string{
 				"route_id":   "route_test",
+				"year":       "2023",
 				"start_time": "2023-01-15T10:00:01Z",
 			},
 			mockSetup: func(m *MockSalesRepository) {
@@ -426,18 +431,20 @@ func TestGetEmployeeIDsByTripEndpoint(t *testing.T) {
 			name: "Missing Query Parameters",
 			queryParams: map[string]string{
 				// "route_id" is missing in this case
+				"year":       "2023",
 				"start_time": "2023-01-15T10:00:01Z",
 			},
 			mockSetup:      func(m *MockSalesRepository) {},
 			expectedStatus: http.StatusBadRequest,
 			expectedBody: schemas.ErrorResponse{
-				Error: "missing required query parameters: route_id and start_time",
+				Error: "missing required query parameters: route_id, year or start_time",
 			},
 		},
 		{
 			name: "Invalid StartTime Format",
 			queryParams: map[string]string{
 				"route_id":   "route_test",
+				"year":       "2023",
 				"start_time": "invalid-time",
 			},
 			mockSetup:      func(m *MockSalesRepository) {},
@@ -450,6 +457,7 @@ func TestGetEmployeeIDsByTripEndpoint(t *testing.T) {
 			name: "Repository Error",
 			queryParams: map[string]string{
 				"route_id":   "route_test",
+				"year":       "2023",
 				"start_time": "2023-01-15T10:00:01Z",
 			},
 			mockSetup: func(m *MockSalesRepository) {
@@ -555,9 +563,9 @@ func TestGetEmployeeTripsEndpoint(t *testing.T) {
 				// Create a sample trip returned by the repository.
 				sampleTrip := models.EmployeeTrip{
 					EmployeeID: "emp1",
-					Year:       "2023",
 					TripID: models.TripID{
 						RouteID:   "route_test",
+						Year:      "2023",
 						StartTime: time.Date(2023, 1, 15, 10, 0, 1, 0, time.UTC),
 					},
 					EndTime: time.Date(2023, 1, 15, 11, 0, 1, 0, time.UTC),
@@ -570,10 +578,9 @@ func TestGetEmployeeTripsEndpoint(t *testing.T) {
 				EmployeeTrips: []schemas.EmployeeTrip{
 					{
 						EmployeeID: "emp1",
-						Year:       "2023",
 						TripID: schemas.TripID{
-							RouteID: "route_test",
-							// Domain time is converted to RFC3339 string.
+							RouteID:   "route_test",
+							Year:      "2023",
 							StartTime: "2023-01-15T10:00:01Z",
 						},
 						// EndTime remains as a time.Time in the schema.

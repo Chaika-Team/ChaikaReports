@@ -6,10 +6,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"net/http"
-	"time"
-
 	"github.com/go-playground/validator/v10"
+	"net/http"
+	"strconv"
+	"time"
 )
 
 const invalidRequestBodyErrorMessage = "invalid request body"
@@ -21,16 +21,18 @@ func DecodeInsertSalesRequest(_ context.Context, r *http.Request) (interface{}, 
 		return nil, errors.New(invalidRequestBodyErrorMessage)
 	}
 
-	// Validate the request
-	validate := validator.New()
-	if err := validate.Struct(req); err != nil {
-		return nil, errors.New("validation failed: " + err.Error())
-	}
-
 	// Convert schemas.InsertSalesRequest to models.Carriage
 	carriageStartTime, err := time.Parse(time.RFC3339, req.TripID.StartTime)
 	if err != nil {
 		return nil, errors.New("invalid trip start_time format")
+	}
+
+	req.TripID.Year = strconv.Itoa(carriageStartTime.Year())
+
+	// Validate the request
+	validate := validator.New()
+	if err := validate.Struct(req); err != nil {
+		return nil, errors.New("validation failed: " + err.Error())
 	}
 
 	carriageEndTime, err := time.Parse(time.RFC3339, req.EndTime)
@@ -85,16 +87,18 @@ func DecodeInsertSalesRequest(_ context.Context, r *http.Request) (interface{}, 
 func DecodeGetEmployeeCartsInTripRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	query := r.URL.Query()
 	routeID := query.Get("route_id")
+	year := query.Get("year")
 	startTime := query.Get("start_time")
 	employeeID := query.Get("employee_id")
 
-	if routeID == "" || startTime == "" || employeeID == "" {
-		return nil, errors.New("missing one or more required query parameters: route_id, start_time, employee_id")
+	if routeID == "" || year == "" || startTime == "" || employeeID == "" {
+		return nil, errors.New("missing one or more required query parameters: route_id, year, start_time, employee_id")
 	}
 
 	req := schemas.GetEmployeeCartsInTripRequest{
 		TripID: schemas.TripID{
 			RouteID:   routeID,
+			Year:      year,
 			StartTime: startTime,
 		},
 		EmployeeID: employeeID,
@@ -105,15 +109,17 @@ func DecodeGetEmployeeCartsInTripRequest(_ context.Context, r *http.Request) (in
 func DecodeGetEmployeeIDsByTripRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	query := r.URL.Query()
 	routeID := query.Get("route_id")
+	year := query.Get("year")
 	startTime := query.Get("start_time")
 
-	if routeID == "" || startTime == "" {
-		return nil, errors.New("missing required query parameters: route_id and start_time")
+	if routeID == "" || year == "" || startTime == "" {
+		return nil, errors.New("missing required query parameters: route_id, year or start_time")
 	}
 
 	req := schemas.GetEmployeeIDsByTripRequest{
 		TripID: schemas.TripID{
 			RouteID:   routeID,
+			Year:      year,
 			StartTime: startTime,
 		},
 	}

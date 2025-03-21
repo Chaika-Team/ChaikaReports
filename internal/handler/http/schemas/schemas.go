@@ -5,6 +5,7 @@ import "time"
 // TripID represents the trip identifier in the request
 type TripID struct {
 	RouteID   string `json:"route_id" validate:"required"`
+	Year      string `json:"year" validate:"required"`
 	StartTime string `json:"start_time" validate:"required,datetime=2006-01-02T15:04:05Z07:00"`
 }
 
@@ -30,7 +31,6 @@ type Item struct {
 
 type EmployeeTrip struct {
 	EmployeeID string    `json:"employee_id"`
-	Year       string    `json:"year"`
 	TripID     TripID    `json:"trip_id"`
 	EndTime    time.Time `json:"end_time"`
 }

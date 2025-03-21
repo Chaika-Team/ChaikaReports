@@ -26,6 +26,7 @@ func NewSalesRepository(session CassandraSession, logger log.Logger) *SalesRepos
 const insertOperationQuery = `
 	INSERT INTO operations (
 		route_id,
+	    year,
 	    start_time,
 		end_time,
 	    carriage_id, 
@@ -35,7 +36,7 @@ const insertOperationQuery = `
 		product_id,
 	    quantity,
 		price)
-	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 const insertEmployeeTripsQuery = `
 	INSERT INTO employee_trips (
@@ -49,12 +50,14 @@ const insertEmployeeTripsQuery = `
 const getEmployeeCartsInTripQuery = `SELECT operation_time, operation_type, product_id, quantity, price
 	FROM operations
 	WHERE route_id = ?
+	  AND year = ?
 	  AND start_time = ?
 	  AND employee_id = ?`
 
 const getEmployeeIdsByTripQuery = `SELECT employee_id 
 	FROM operations 
 	WHERE route_id = ?
+	  AND year = ?
 	  AND start_time = ?`
 
 const getEmployeeTripsQuery = `SELECT route_id, start_time, end_time
@@ -64,21 +67,23 @@ const getEmployeeTripsQuery = `SELECT route_id, start_time, end_time
 
 const updateItemQuantityQuery = `UPDATE operations SET quantity = ? 
     WHERE route_id = ? 
+      AND year = ?
       AND start_time = ?
       AND employee_id = ?
       AND operation_time = ?
       AND product_id = ?
     IF EXISTS`
 
-const deleteItemFromCartQuery = `DELETE FROM operations WHERE route_id = ? AND start_time = ? AND employee_id = ? AND operation_time = ? AND product_id = ? IF EXISTS`
+const deleteItemFromCartQuery = `DELETE FROM operations WHERE route_id = ? AND year = ? AND start_time = ? AND employee_id = ? AND operation_time = ? AND product_id = ? IF EXISTS`
 
 // InsertData Inserts all data from a Carriage into the Cassandra database
 func (r *SalesRepository) InsertData(ctx context.Context, carriageReport *models.Carriage) error {
 	batch := r.session.NewBatch(gocql.LoggedBatch).WithContext(ctx)
+	carriageReport.TripID.Year = strconv.Itoa(carriageReport.TripID.StartTime.Year())
 	for _, cart := range carriageReport.Carts {
 		batch.Query(insertEmployeeTripsQuery,
 			&cart.CartID.EmployeeID,
-			strconv.Itoa(carriageReport.TripID.StartTime.Year()),
+			&carriageReport.TripID.Year,
 			&carriageReport.TripID.RouteID,
 			&carriageReport.TripID.StartTime,
 			&carriageReport.EndTime,
@@ -87,6 +92,7 @@ func (r *SalesRepository) InsertData(ctx context.Context, carriageReport *models
 			// Batch query allows to save data integrity by stopping transaction if at least one insertion fails
 			batch.Query(insertOperationQuery,
 				&carriageReport.TripID.RouteID,
+				&carriageReport.TripID.Year,
 				&carriageReport.TripID.StartTime,
 				&carriageReport.EndTime,
 				&carriageReport.CarriageID,
@@ -112,6 +118,7 @@ func (r *SalesRepository) InsertData(ctx context.Context, carriageReport *models
 func (r *SalesRepository) GetEmployeeCartsInTrip(ctx context.Context, tripID *models.TripID, employeeID *string) ([]models.Cart, error) {
 	iter := r.session.Query(getEmployeeCartsInTripQuery,
 		&tripID.RouteID,
+		&tripID.Year,
 		&tripID.StartTime,
 		&employeeID).WithContext(ctx).Iter()
 
@@ -134,6 +141,7 @@ func (r *SalesRepository) GetEmployeeCartsInTrip(ctx context.Context, tripID *mo
 func (r *SalesRepository) GetEmployeeIDsByTrip(ctx context.Context, tripID *models.TripID) ([]string, error) {
 	iter := r.session.Query(getEmployeeIdsByTripQuery,
 		&tripID.RouteID,
+		&tripID.Year,
 		&tripID.StartTime).WithContext(ctx).Iter()
 
 	// Making a map to get unique ID's since Cassandra only allows DISTINCT for partition keys
@@ -168,9 +176,9 @@ func (r *SalesRepository) GetEmployeeTrips(ctx context.Context, employeeID strin
 	for iter.Scan(&routeID, &startTime, &endTime) {
 		employeeTrip := models.EmployeeTrip{
 			EmployeeID: employeeID,
-			Year:       year,
 			TripID: models.TripID{
 				RouteID:   routeID,
+				Year:      year,
 				StartTime: startTime,
 			},
 			EndTime: endTime,
@@ -190,6 +198,7 @@ func (r *SalesRepository) GetEmployeeTrips(ctx context.Context, employeeID strin
 func (r *SalesRepository) UpdateItemQuantity(ctx context.Context, tripID *models.TripID, cartID *models.CartID, productID *int, newQuantity *int16) error {
 	applied, err := r.session.Query(updateItemQuantityQuery, newQuantity,
 		tripID.RouteID,
+		tripID.Year,
 		tripID.StartTime,
 		cartID.EmployeeID,
 		cartID.OperationTime,
@@ -210,6 +219,7 @@ func (r *SalesRepository) UpdateItemQuantity(ctx context.Context, tripID *models
 func (r *SalesRepository) DeleteItemFromCart(ctx context.Context, tripID *models.TripID, cartID *models.CartID, productID *int) error {
 	deleted, err := r.session.Query(deleteItemFromCartQuery,
 		tripID.RouteID,
+		tripID.Year,
 		tripID.StartTime,
 		cartID.EmployeeID,
 		cartID.OperationTime,

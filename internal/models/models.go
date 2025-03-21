@@ -30,6 +30,7 @@ type Carriage struct {
 
 type TripID struct {
 	RouteID   string    `json:"route_id"`
+	Year      string    `json:"year"`
 	StartTime time.Time `json:"start_time"`
 }
 
@@ -41,7 +42,6 @@ type CartID struct {
 // EmployeeTrip is a domain model that represents a trip that an employee was in
 type EmployeeTrip struct {
 	EmployeeID string    `json:"employee_id"`
-	Year       string    `json:"year"`
 	TripID     TripID    `json:"trip_id"`
 	EndTime    time.Time `json:"end_time"`
 }

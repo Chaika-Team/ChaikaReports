@@ -65,6 +65,7 @@ func MakeGetEmployeeCartsInTripEndpoint(svc service.SalesService) endpoint.Endpo
 		// Build the domain TripID.
 		tripID := models.TripID{
 			RouteID:   req.TripID.RouteID,
+			Year:      req.TripID.Year,
 			StartTime: startTime,
 		}
 
@@ -103,6 +104,7 @@ func MakeGetEmployeeIDsByTripEndpoint(svc service.SalesService) endpoint.Endpoin
 		// Build the domain TripID.
 		tripID := models.TripID{
 			RouteID:   req.TripID.RouteID,
+			Year:      req.TripID.Year,
 			StartTime: startTime,
 		}
 
@@ -141,9 +143,9 @@ func MakeGetEmployeeTripsEndpoint(svc service.SalesService) endpoint.Endpoint {
 			// into a string in RFC3339 format, as defined by the schema.
 			schemaTrip := schemas.EmployeeTrip{
 				EmployeeID: t.EmployeeID,
-				Year:       t.Year,
 				TripID: schemas.TripID{
 					RouteID:   t.TripID.RouteID,
+					Year:      t.TripID.Year,
 					StartTime: t.TripID.StartTime.Format(time.RFC3339),
 				},
 				EndTime: t.EndTime, // EndTime remains as time.Time per your schema.
@@ -172,6 +174,7 @@ func MakeUpdateItemQuantityEndpoint(svc service.SalesService) endpoint.Endpoint 
 
 		tripID := models.TripID{
 			RouteID:   req.TripID.RouteID,
+			Year:      req.TripID.Year,
 			StartTime: startTime,
 		}
 
@@ -212,6 +215,7 @@ func MakeDeleteItemFromCartEndpoint(svc service.SalesService) endpoint.Endpoint 
 		}
 		tripID := models.TripID{
 			RouteID:   req.TripID.RouteID,
+			Year:      req.TripID.Year,
 			StartTime: startTime,
 		}
 
