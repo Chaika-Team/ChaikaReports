@@ -3,7 +3,7 @@ name: Go CI/CD Pipeline
 on:
   push:
     branches:
-      - CKR-*
+      - CHR-*
       - CHOPS-*
       - fix/*
   pull_request:
