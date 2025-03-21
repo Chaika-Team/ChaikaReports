@@ -3,16 +3,15 @@ name: Go CI/CD Pipeline
 on:
   push:
     branches:
-      - dev
-      - feature/*
+      - CKR-*
+      - CHOPS-*
+      - fix/*
   pull_request:
-    branches:
-      - master
-
+    types: [opened, synchronize, reopened]
 
 jobs:
   build:
-    name: Build and Test
+    name: Build
     runs-on: ubuntu-latest
 
     steps:
@@ -48,16 +47,6 @@ jobs:
           go install honnef.co/go/tools/cmd/staticcheck@latest
           staticcheck ./...
 
-      - name: Run tests
-        run: |
-          go test ./... -v -coverprofile=coverage.out -covermode=atomic
-
-      - name: Upload coverage to artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage
-          path: coverage.out
-
       - name: Build
         run: go build -v -o chaika-goods ./cmd
 
@@ -79,7 +68,6 @@ jobs:
         run: |
           go test ./... -coverprofile=coverage.out
   
-
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v4.2.1
         env:
