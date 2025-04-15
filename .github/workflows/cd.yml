@@ -56,5 +56,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           push: true
-          tags: harbor.remystorage.ru/chaika/chaika-reports:${{ steps.version.outputs.version }}
+          tags: |
+            harbor.remystorage.ru/chaika/chaika-reports:${{ steps.version.outputs.version }}
+            harbor.remystorage.ru/chaika/chaika-reports:latest
           file: ./Dockerfile

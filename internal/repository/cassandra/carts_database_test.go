@@ -104,6 +104,7 @@ func (s *SimpleFakeIter) Close() error {
 type simpleFakeIterTrip struct {
 	rows []struct {
 		routeID   string
+		year      string
 		startTime time.Time
 		endTime   time.Time
 	}
@@ -416,6 +417,7 @@ func TestGetEmployeeCartsInTrip(t *testing.T) {
 	// Define test tripID and employeeID.
 	tripID := &models.TripID{
 		RouteID:   "route_test",
+		Year:      "2023",
 		StartTime: time.Date(2023, 1, 15, 10, 0, 1, 0, time.UTC),
 	}
 	employeeID := "testEmp"
@@ -495,6 +497,7 @@ func TestGetEmployeeCartsInTrip_PostAggregateCloseError(t *testing.T) {
 
 	tripID := &models.TripID{
 		RouteID:   "route_test",
+		Year:      "2023",
 		StartTime: time.Date(2023, 1, 15, 10, 0, 1, 0, time.UTC),
 	}
 	empID := "emp123"
@@ -531,6 +534,7 @@ func TestGetEmployeeIDsByTrip(t *testing.T) {
 	// Define a test TripID.
 	tripID := &models.TripID{
 		RouteID:   "route_test",
+		Year:      "2023",
 		StartTime: time.Date(2023, 1, 15, 10, 0, 1, 0, time.UTC),
 	}
 
@@ -567,6 +571,7 @@ func TestGetEmployeeIDsByTrip_CloseError(t *testing.T) {
 	// Define a test TripID.
 	tripID := &models.TripID{
 		RouteID:   "route_test",
+		Year:      "2023",
 		StartTime: time.Date(2023, 1, 15, 10, 0, 1, 0, time.UTC),
 	}
 
@@ -588,19 +593,22 @@ func TestGetEmployeeTrips(t *testing.T) {
 	// Set up a FakeQuery and expectations.
 	fakeQuery := new(FakeQuery)
 	fakeQuery.On("WithContext", mock.Anything).Return(fakeQuery)
-	// Prepare a fake iterator with two rows.
+	// Prepare a fake iterator with two rows including the year field.
 	iterRows := []struct {
 		routeID   string
+		year      string
 		startTime time.Time
 		endTime   time.Time
 	}{
 		{
 			routeID:   "route1",
+			year:      "2023",
 			startTime: time.Date(2023, 1, 15, 10, 0, 0, 0, time.UTC),
 			endTime:   time.Date(2023, 1, 15, 11, 0, 0, 0, time.UTC),
 		},
 		{
 			routeID:   "route2",
+			year:      "2023",
 			startTime: time.Date(2023, 1, 16, 12, 0, 0, 0, time.UTC),
 			endTime:   time.Date(2023, 1, 16, 13, 0, 0, 0, time.UTC),
 		},
@@ -621,18 +629,18 @@ func TestGetEmployeeTrips(t *testing.T) {
 	expectedTrips := []models.EmployeeTrip{
 		{
 			EmployeeID: employeeID,
-			Year:       year,
 			TripID: models.TripID{
 				RouteID:   "route1",
+				Year:      year,
 				StartTime: time.Date(2023, 1, 15, 10, 0, 0, 0, time.UTC),
 			},
 			EndTime: time.Date(2023, 1, 15, 11, 0, 0, 0, time.UTC),
 		},
 		{
 			EmployeeID: employeeID,
-			Year:       year,
 			TripID: models.TripID{
 				RouteID:   "route2",
+				Year:      year,
 				StartTime: time.Date(2023, 1, 16, 12, 0, 0, 0, time.UTC),
 			},
 			EndTime: time.Date(2023, 1, 16, 13, 0, 0, 0, time.UTC),
@@ -714,6 +722,7 @@ func TestUpdateItemQuantity_ScanCASError(t *testing.T) {
 	// Define dummy parameters.
 	tripID := &models.TripID{
 		RouteID:   "route_test",
+		Year:      "2023",
 		StartTime: time.Date(2023, 1, 15, 10, 0, 0, 0, time.UTC),
 	}
 	cartID := &models.CartID{
@@ -752,6 +761,7 @@ func TestUpdateItemQuantity_NotApplied(t *testing.T) {
 	// Define dummy parameters.
 	tripID := &models.TripID{
 		RouteID:   "route_test",
+		Year:      "2023",
 		StartTime: time.Date(2023, 1, 15, 10, 0, 0, 0, time.UTC),
 	}
 	cartID := &models.CartID{
@@ -786,6 +796,7 @@ func TestDeleteItemFromCart(t *testing.T) {
 
 	tripID := &models.TripID{
 		RouteID:   "route_test",
+		Year:      "2023",
 		StartTime: time.Date(2023, 1, 15, 10, 0, 1, 0, time.UTC),
 	}
 	cartID := &models.CartID{
@@ -809,13 +820,14 @@ func TestDeleteItemFromCart(t *testing.T) {
 	fakeQuery.AssertExpectations(t)
 }
 
-func TestDeleteItemFromCart_ScanCASError_Mock(t *testing.T) {
+func TestDeleteItemFromCart_ScanCASError(t *testing.T) {
 	// This test simulates an error from ScanCAS.
 	mockSession := new(MockSession)
 	repo := NewSalesRepository(mockSession, log.NewNopLogger())
 
 	tripID := &models.TripID{
 		RouteID:   "route_test",
+		Year:      "2023",
 		StartTime: time.Date(2023, 1, 15, 10, 0, 0, 0, time.UTC),
 	}
 	cartID := &models.CartID{
@@ -843,7 +855,7 @@ func TestDeleteItemFromCart_ScanCASError_Mock(t *testing.T) {
 	fakeQuery.AssertExpectations(t)
 }
 
-func TestDeleteItemFromCart_NotDeleted_Mock(t *testing.T) {
+func TestDeleteItemFromCart_NotDeleted(t *testing.T) {
 	// This test simulates a case where ScanCAS succeeds but returns false,
 	// so the deletion is not applied.
 	mockSession := new(MockSession)
@@ -851,6 +863,7 @@ func TestDeleteItemFromCart_NotDeleted_Mock(t *testing.T) {
 
 	tripID := &models.TripID{
 		RouteID:   "route_test",
+		Year:      "2023",
 		StartTime: time.Date(2023, 1, 15, 10, 0, 0, 0, time.UTC),
 	}
 	cartID := &models.CartID{
