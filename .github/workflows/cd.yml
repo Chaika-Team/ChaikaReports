@@ -1,0 +1,36 @@
+name: Deploy ChaikaReports image
+
+on:
+  workflow_run:
+    workflows:
+      - 'Go CI/CD Pipeline'
+    branches:
+      - 'master'
+    types:
+      - 'completed'
+
+jobs:
+  deploy:
+    name: Push new image into registry
+    runs-on: ubuntu-latest
+    if: ${{github.event.workflow_run.conclusion == 'success' && contains(toJson(github.event.workflow_run.head_commit.modified), 'version')}}
+    steps:
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: harbor.remystorage.ru
+          username: ${{ secrets.HARBOR_USER }}
+          password: ${{ secrets.HARBOR_TOKEN }}
+
+      - name: Read version from file
+        id: version
+        run: |
+          VERSION=$(cat version | tr -d ' \n')
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Build and push container image to registry
+        uses: docker/build-push-action@v3
+        with:
+          push: true
+          tags: harbor.remystorage.ru/chaika/chaika-reports:${{ env.VERSION }}
+          file: ./Dockerfile

@@ -6,6 +6,7 @@ on:
       - CHR-*
       - CHOPS-*
       - fix/*
+      - master
 
 jobs:
   build:
