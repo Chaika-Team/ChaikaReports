@@ -102,3 +102,5 @@ fabric.properties
 go.work
 main
 config.yml
+/cmd/test-scripts/
+/test/db_test/

@@ -1,0 +1,563 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "API documentation for the ChaikaReports microservice.",
+        "title": "ChaikaReports API",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "name": "API Support",
+            "url": "http://www.swagger.io/support",
+            "email": "support@chaikareports.com"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+        },
+        "version": "1.0.4"
+    },
+    "host": "localhost:8080",
+    "basePath": "/api/v1",
+    "paths": {
+        "/sales": {
+            "post": {
+                "description": "Inserts sales data into the system.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sales"
+                ],
+                "summary": "Insert Sales Data",
+                "parameters": [
+                    {
+                        "description": "Insert Sales Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.InsertSalesRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Data inserted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.InsertSalesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sales/trip/cart/employee": {
+            "get": {
+                "description": "Returns all carts handled by a specific employee during a specific trip.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sales"
+                ],
+                "summary": "Get Employee Carts in Trip",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Route ID",
+                        "name": "route_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Year",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Trip Start Time in RFC3339 format",
+                        "name": "start_time",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Employee ID",
+                        "name": "employee_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.GetEmployeeCartsInTripResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sales/trip/cart/item": {
+            "delete": {
+                "description": "Deletes a product from a specific cart.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sales"
+                ],
+                "summary": "Delete Item from Cart",
+                "parameters": [
+                    {
+                        "description": "Delete Item from Cart Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.DeleteItemFromCartRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.DeleteItemFromCartResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sales/trip/cart/item/quantity": {
+            "put": {
+                "description": "Updates the quantity of a specific product in a cart.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sales"
+                ],
+                "summary": "Update Item Quantity",
+                "parameters": [
+                    {
+                        "description": "Update Item Quantity Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.UpdateItemQuantityRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.UpdateItemQuantityResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sales/trip/employee_ids": {
+            "get": {
+                "description": "Returns all employee IDs who worked during a specific trip.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sales"
+                ],
+                "summary": "Get Employee IDs by Trip",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Route ID",
+                        "name": "route_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Year",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Trip Start Time in RFC3339 format",
+                        "name": "start_time",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.GetEmployeeIDsByTripResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sales/trip/employee_trips": {
+            "get": {
+                "description": "Returns all trips completed by an employee during a year.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sales"
+                ],
+                "summary": "Get Employee Trips",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Employee ID",
+                        "name": "employee_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Year",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.GetEmployeeTripsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "schemas.Cart": {
+            "type": "object",
+            "required": [
+                "cart_id",
+                "items",
+                "operation_type"
+            ],
+            "properties": {
+                "cart_id": {
+                    "$ref": "#/definitions/schemas.CartID"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.Item"
+                    }
+                },
+                "operation_type": {
+                    "type": "integer"
+                }
+            }
+        },
+        "schemas.CartID": {
+            "type": "object",
+            "required": [
+                "employee_id",
+                "operation_time"
+            ],
+            "properties": {
+                "employee_id": {
+                    "type": "string"
+                },
+                "operation_time": {
+                    "type": "string"
+                }
+            }
+        },
+        "schemas.DeleteItemFromCartRequest": {
+            "type": "object",
+            "required": [
+                "cart_id",
+                "product_id",
+                "trip_id"
+            ],
+            "properties": {
+                "cart_id": {
+                    "$ref": "#/definitions/schemas.CartID"
+                },
+                "product_id": {
+                    "type": "integer"
+                },
+                "trip_id": {
+                    "$ref": "#/definitions/schemas.TripID"
+                }
+            }
+        },
+        "schemas.DeleteItemFromCartResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "schemas.EmployeeTrip": {
+            "type": "object",
+            "properties": {
+                "employee_id": {
+                    "type": "string"
+                },
+                "end_time": {
+                    "type": "string"
+                },
+                "trip_id": {
+                    "$ref": "#/definitions/schemas.TripID"
+                }
+            }
+        },
+        "schemas.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                }
+            }
+        },
+        "schemas.GetEmployeeCartsInTripResponse": {
+            "type": "object",
+            "properties": {
+                "carts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.Cart"
+                    }
+                }
+            }
+        },
+        "schemas.GetEmployeeIDsByTripResponse": {
+            "type": "object",
+            "properties": {
+                "employee_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "schemas.GetEmployeeTripsResponse": {
+            "type": "object",
+            "required": [
+                "employee_trips"
+            ],
+            "properties": {
+                "employee_trips": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.EmployeeTrip"
+                    }
+                }
+            }
+        },
+        "schemas.InsertSalesRequest": {
+            "type": "object",
+            "required": [
+                "carriage_id",
+                "carts",
+                "end_time",
+                "trip_id"
+            ],
+            "properties": {
+                "carriage_id": {
+                    "type": "integer"
+                },
+                "carts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.Cart"
+                    }
+                },
+                "end_time": {
+                    "type": "string"
+                },
+                "trip_id": {
+                    "$ref": "#/definitions/schemas.TripID"
+                }
+            }
+        },
+        "schemas.InsertSalesResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "schemas.Item": {
+            "type": "object",
+            "required": [
+                "price",
+                "product_id",
+                "quantity"
+            ],
+            "properties": {
+                "price": {
+                    "description": "Storing price in kopeeks",
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "product_id": {
+                    "type": "integer"
+                },
+                "quantity": {
+                    "type": "integer"
+                }
+            }
+        },
+        "schemas.TripID": {
+            "type": "object",
+            "required": [
+                "route_id",
+                "start_time",
+                "year"
+            ],
+            "properties": {
+                "route_id": {
+                    "type": "string"
+                },
+                "start_time": {
+                    "type": "string"
+                },
+                "year": {
+                    "type": "string"
+                }
+            }
+        },
+        "schemas.UpdateItemQuantityRequest": {
+            "type": "object",
+            "required": [
+                "cart_id",
+                "new_quantity",
+                "product_id",
+                "trip_id"
+            ],
+            "properties": {
+                "cart_id": {
+                    "$ref": "#/definitions/schemas.CartID"
+                },
+                "new_quantity": {
+                    "type": "integer"
+                },
+                "product_id": {
+                    "type": "integer"
+                },
+                "trip_id": {
+                    "$ref": "#/definitions/schemas.TripID"
+                }
+            }
+        },
+        "schemas.UpdateItemQuantityResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

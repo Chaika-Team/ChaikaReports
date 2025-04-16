@@ -10,6 +10,12 @@ import (
 	"time"
 )
 
+const (
+	invalidStartTimeErrorMessage     = "invalid start_time format; must be RFC3339"
+	invalidOperationTimeErrorMessage = "invalid operation_time format; must be RFC3339"
+	invalidRequestTypeErrorMessage   = "invalid request type"
+)
+
 // MakeInsertSalesEndpoint creates the insert sales endpoint.
 //
 // @Summary      Insert Sales Data
@@ -22,14 +28,6 @@ import (
 // @Failure      400      {object}  schemas.ErrorResponse       "Bad request"
 // @Failure      500      {object}  schemas.ErrorResponse       "Internal server error"
 // @Router       /sales [post]
-
-const (
-	invalidStartTimeErrorMessage     = "invalid start_time format; must be RFC3339"
-	invalidOperationTimeErrorMessage = "invalid operation_time format; must be RFC3339"
-	invalidRequestTypeErrorMessage   = "invalid request type"
-)
-
-// MakeInsertSalesEndpoint creates the insert sales endpoint
 func MakeInsertSalesEndpoint(svc service.SalesService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		carriage, ok := request.(*models.Carriage)
@@ -48,6 +46,21 @@ func MakeInsertSalesEndpoint(svc service.SalesService) endpoint.Endpoint {
 	}
 }
 
+// MakeGetEmployeeCartsInTripEndpoint handles getting carts for an employee in a trip
+//
+// @Summary      Get Employee Carts in Trip
+// @Description  Returns all carts handled by a specific employee during a specific trip.
+// @Tags         Sales
+// @Accept       json
+// @Produce      json
+// @Param        route_id     query     string  true  "Route ID"
+// @Param        year         query     string  true  "Year"
+// @Param        start_time   query     string  true  "Trip Start Time in RFC3339 format"
+// @Param        employee_id  query     string  true  "Employee ID"
+// @Success      200          {object}  schemas.GetEmployeeCartsInTripResponse
+// @Failure      400          {object}  schemas.ErrorResponse
+// @Failure      500          {object}  schemas.ErrorResponse
+// @Router       /sales/trip/cart/employee [get]
 func MakeGetEmployeeCartsInTripEndpoint(svc service.SalesService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		// Assert the request to our schema type.
@@ -88,6 +101,20 @@ func MakeGetEmployeeCartsInTripEndpoint(svc service.SalesService) endpoint.Endpo
 	}
 }
 
+// MakeGetEmployeeIDsByTripEndpoint handles getting employee IDs by trip
+//
+// @Summary      Get Employee IDs by Trip
+// @Description  Returns all employee IDs who worked during a specific trip.
+// @Tags         Sales
+// @Accept       json
+// @Produce      json
+// @Param        route_id    query     string  true  "Route ID"
+// @Param        year        query     string  true  "Year"
+// @Param        start_time  query     string  true  "Trip Start Time in RFC3339 format"
+// @Success      200         {object}  schemas.GetEmployeeIDsByTripResponse
+// @Failure      400         {object}  schemas.ErrorResponse
+// @Failure      500         {object}  schemas.ErrorResponse
+// @Router       /sales/trip/employee_ids [get]
 func MakeGetEmployeeIDsByTripEndpoint(svc service.SalesService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req, ok := request.(schemas.GetEmployeeIDsByTripRequest)
@@ -121,7 +148,19 @@ func MakeGetEmployeeIDsByTripEndpoint(svc service.SalesService) endpoint.Endpoin
 	}
 }
 
-// MakeGetEmployeeTripsEndpoint creates the endpoint for fetching an employee's trips.
+// MakeGetEmployeeTripsEndpoint handles getting trips by employee
+//
+// @Summary      Get Employee Trips
+// @Description  Returns all trips completed by an employee during a year.
+// @Tags         Sales
+// @Accept       json
+// @Produce      json
+// @Param        employee_id  query     string  true  "Employee ID"
+// @Param        year         query     string  true  "Year"
+// @Success      200          {object}  schemas.GetEmployeeTripsResponse
+// @Failure      400          {object}  schemas.ErrorResponse
+// @Failure      500          {object}  schemas.ErrorResponse
+// @Router       /sales/trip/employee_trips [get]
 func MakeGetEmployeeTripsEndpoint(svc service.SalesService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		// Assert the request type to our schema type.
@@ -159,6 +198,18 @@ func MakeGetEmployeeTripsEndpoint(svc service.SalesService) endpoint.Endpoint {
 	}
 }
 
+// MakeUpdateItemQuantityEndpoint handles updating quantity of an item in a cart
+//
+// @Summary      Update Item Quantity
+// @Description  Updates the quantity of a specific product in a cart.
+// @Tags         Sales
+// @Accept       json
+// @Produce      json
+// @Param        request  body      schemas.UpdateItemQuantityRequest  true  "Update Item Quantity Request"
+// @Success      200      {object}  schemas.UpdateItemQuantityResponse
+// @Failure      400      {object}  schemas.ErrorResponse
+// @Failure      500      {object}  schemas.ErrorResponse
+// @Router       /sales/trip/cart/item/quantity [put]
 func MakeUpdateItemQuantityEndpoint(svc service.SalesService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req, ok := request.(schemas.UpdateItemQuantityRequest)
@@ -201,6 +252,18 @@ func MakeUpdateItemQuantityEndpoint(svc service.SalesService) endpoint.Endpoint 
 	}
 }
 
+// MakeDeleteItemFromCartEndpoint handles deleting an item from a cart
+//
+// @Summary      Delete Item from Cart
+// @Description  Deletes a product from a specific cart.
+// @Tags         Sales
+// @Accept       json
+// @Produce      json
+// @Param        request  body      schemas.DeleteItemFromCartRequest  true  "Delete Item from Cart Request"
+// @Success      200      {object}  schemas.DeleteItemFromCartResponse
+// @Failure      400      {object}  schemas.ErrorResponse
+// @Failure      500      {object}  schemas.ErrorResponse
+// @Router       /sales/trip/cart/item [delete]
 func MakeDeleteItemFromCartEndpoint(svc service.SalesService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req, ok := request.(schemas.DeleteItemFromCartRequest)
@@ -240,5 +303,3 @@ func MakeDeleteItemFromCartEndpoint(svc service.SalesService) endpoint.Endpoint 
 		}, nil
 	}
 }
-
-/* - - - - HELPER FUNCTIONS - - - - */

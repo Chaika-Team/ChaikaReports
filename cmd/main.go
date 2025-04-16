@@ -2,7 +2,7 @@ package main
 
 // main.go
 // @title           ChaikaReports API
-// @version         1.0
+// @version         1.0.4
 // @description     API documentation for the ChaikaReports microservice.
 // @termsOfService  http://swagger.io/terms/
 
@@ -17,6 +17,7 @@ package main
 // @BasePath        /api/v1
 
 import (
+	_ "ChaikaReports/cmd/docs"
 	"ChaikaReports/internal/config"
 	httpHandler "ChaikaReports/internal/handler/http"
 	"ChaikaReports/internal/repository/cassandra"
