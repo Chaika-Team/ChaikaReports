@@ -2,7 +2,7 @@ package main
 
 // main.go
 // @title           ChaikaReports API
-// @version         1.0.4
+// @version         1.0.5
 // @description     API documentation for the ChaikaReports microservice.
 // @termsOfService  http://swagger.io/terms/
 
@@ -14,7 +14,7 @@ package main
 // @license.url     https://opensource.org/licenses/MIT
 
 // @host            localhost:8080
-// @BasePath        /api/v1
+// @BasePath        /api/v1/report
 
 import (
 	_ "ChaikaReports/cmd/docs"

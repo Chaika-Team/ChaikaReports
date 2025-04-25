@@ -27,7 +27,7 @@ const (
 // @Success      200      {object}  schemas.InsertSalesResponse "Data inserted successfully"
 // @Failure      400      {object}  schemas.ErrorResponse       "Bad request"
 // @Failure      500      {object}  schemas.ErrorResponse       "Internal server error"
-// @Router       /sales [post]
+// @Router       /sale [post]
 func MakeInsertSalesEndpoint(svc service.SalesService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		carriage, ok := request.(*models.Carriage)
@@ -60,7 +60,7 @@ func MakeInsertSalesEndpoint(svc service.SalesService) endpoint.Endpoint {
 // @Success      200          {object}  schemas.GetEmployeeCartsInTripResponse
 // @Failure      400          {object}  schemas.ErrorResponse
 // @Failure      500          {object}  schemas.ErrorResponse
-// @Router       /sales/trip/cart/employee [get]
+// @Router       /trip/cart/employee [get]
 func MakeGetEmployeeCartsInTripEndpoint(svc service.SalesService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		// Assert the request to our schema type.
@@ -114,7 +114,7 @@ func MakeGetEmployeeCartsInTripEndpoint(svc service.SalesService) endpoint.Endpo
 // @Success      200         {object}  schemas.GetEmployeeIDsByTripResponse
 // @Failure      400         {object}  schemas.ErrorResponse
 // @Failure      500         {object}  schemas.ErrorResponse
-// @Router       /sales/trip/employee_ids [get]
+// @Router       /trip/employee_id [get]
 func MakeGetEmployeeIDsByTripEndpoint(svc service.SalesService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req, ok := request.(schemas.GetEmployeeIDsByTripRequest)
@@ -160,7 +160,7 @@ func MakeGetEmployeeIDsByTripEndpoint(svc service.SalesService) endpoint.Endpoin
 // @Success      200          {object}  schemas.GetEmployeeTripsResponse
 // @Failure      400          {object}  schemas.ErrorResponse
 // @Failure      500          {object}  schemas.ErrorResponse
-// @Router       /sales/trip/employee_trips [get]
+// @Router       /trip/employee_trip [get]
 func MakeGetEmployeeTripsEndpoint(svc service.SalesService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		// Assert the request type to our schema type.
@@ -209,7 +209,7 @@ func MakeGetEmployeeTripsEndpoint(svc service.SalesService) endpoint.Endpoint {
 // @Success      200      {object}  schemas.UpdateItemQuantityResponse
 // @Failure      400      {object}  schemas.ErrorResponse
 // @Failure      500      {object}  schemas.ErrorResponse
-// @Router       /sales/trip/cart/item/quantity [put]
+// @Router       /trip/cart/item/quantity [put]
 func MakeUpdateItemQuantityEndpoint(svc service.SalesService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req, ok := request.(schemas.UpdateItemQuantityRequest)
@@ -263,7 +263,7 @@ func MakeUpdateItemQuantityEndpoint(svc service.SalesService) endpoint.Endpoint 
 // @Success      200      {object}  schemas.DeleteItemFromCartResponse
 // @Failure      400      {object}  schemas.ErrorResponse
 // @Failure      500      {object}  schemas.ErrorResponse
-// @Router       /sales/trip/cart/item [delete]
+// @Router       /trip/cart/item [delete]
 func MakeDeleteItemFromCartEndpoint(svc service.SalesService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req, ok := request.(schemas.DeleteItemFromCartRequest)

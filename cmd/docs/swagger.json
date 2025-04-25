@@ -16,9 +16,9 @@
         "version": "1.0.4"
     },
     "host": "localhost:8080",
-    "basePath": "/api/v1",
+    "basePath": "/api/v1/report",
     "paths": {
-        "/sales": {
+        "/sale": {
             "post": {
                 "description": "Inserts sales data into the system.",
                 "consumes": [
@@ -64,7 +64,7 @@
                 }
             }
         },
-        "/sales/trip/cart/employee": {
+        "/trip/cart/employee": {
             "get": {
                 "description": "Returns all carts handled by a specific employee during a specific trip.",
                 "consumes": [
@@ -129,7 +129,7 @@
                 }
             }
         },
-        "/sales/trip/cart/item": {
+        "/trip/cart/item": {
             "delete": {
                 "description": "Deletes a product from a specific cart.",
                 "consumes": [
@@ -175,7 +175,7 @@
                 }
             }
         },
-        "/sales/trip/cart/item/quantity": {
+        "/trip/cart/item/quantity": {
             "put": {
                 "description": "Updates the quantity of a specific product in a cart.",
                 "consumes": [
@@ -221,7 +221,7 @@
                 }
             }
         },
-        "/sales/trip/employee_ids": {
+        "/trip/employee_id": {
             "get": {
                 "description": "Returns all employee IDs who worked during a specific trip.",
                 "consumes": [
@@ -279,7 +279,7 @@
                 }
             }
         },
-        "/sales/trip/employee_trips": {
+        "/trip/employee_trip": {
             "get": {
                 "description": "Returns all trips completed by an employee during a year.",
                 "consumes": [

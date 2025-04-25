@@ -1,4 +1,4 @@
-basePath: /api/v1
+basePath: /api/v1/report
 definitions:
   schemas.Cart:
     properties:
@@ -166,7 +166,7 @@ info:
   title: ChaikaReports API
   version: 1.0.4
 paths:
-  /sales:
+  /sale:
     post:
       consumes:
       - application/json
@@ -196,7 +196,7 @@ paths:
       summary: Insert Sales Data
       tags:
       - Sales
-  /sales/trip/cart/employee:
+  /trip/cart/employee:
     get:
       consumes:
       - application/json
@@ -241,7 +241,7 @@ paths:
       summary: Get Employee Carts in Trip
       tags:
       - Sales
-  /sales/trip/cart/item:
+  /trip/cart/item:
     delete:
       consumes:
       - application/json
@@ -271,7 +271,7 @@ paths:
       summary: Delete Item from Cart
       tags:
       - Sales
-  /sales/trip/cart/item/quantity:
+  /trip/cart/item/quantity:
     put:
       consumes:
       - application/json
@@ -301,7 +301,7 @@ paths:
       summary: Update Item Quantity
       tags:
       - Sales
-  /sales/trip/employee_ids:
+  /trip/employee_id:
     get:
       consumes:
       - application/json
@@ -340,7 +340,7 @@ paths:
       summary: Get Employee IDs by Trip
       tags:
       - Sales
-  /sales/trip/employee_trips:
+  /trip/employee_trip:
     get:
       consumes:
       - application/json

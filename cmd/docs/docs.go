@@ -24,7 +24,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/sales": {
+        "/sale": {
             "post": {
                 "description": "Inserts sales data into the system.",
                 "consumes": [
@@ -70,7 +70,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/sales/trip/cart/employee": {
+        "/trip/cart/employee": {
             "get": {
                 "description": "Returns all carts handled by a specific employee during a specific trip.",
                 "consumes": [
@@ -135,7 +135,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/sales/trip/cart/item": {
+        "/trip/cart/item": {
             "delete": {
                 "description": "Deletes a product from a specific cart.",
                 "consumes": [
@@ -181,7 +181,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/sales/trip/cart/item/quantity": {
+        "/trip/cart/item/quantity": {
             "put": {
                 "description": "Updates the quantity of a specific product in a cart.",
                 "consumes": [
@@ -227,7 +227,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/sales/trip/employee_ids": {
+        "/trip/employee_id": {
             "get": {
                 "description": "Returns all employee IDs who worked during a specific trip.",
                 "consumes": [
@@ -285,7 +285,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/sales/trip/employee_trips": {
+        "/trip/employee_trip": {
             "get": {
                 "description": "Returns all trips completed by an employee during a year.",
                 "consumes": [
@@ -572,7 +572,7 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0.4",
 	Host:             "localhost:8080",
-	BasePath:         "/api/v1",
+	BasePath:         "/api/v1/report",
 	Schemes:          []string{},
 	Title:            "ChaikaReports API",
 	Description:      "API documentation for the ChaikaReports microservice.",

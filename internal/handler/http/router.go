@@ -4,67 +4,90 @@ import (
 	"ChaikaReports/internal/handler/http/decoder"
 	"ChaikaReports/internal/handler/http/encoder"
 	"ChaikaReports/internal/service"
+	"encoding/json"
+	kitHttp "github.com/go-kit/kit/transport/http"
 	"github.com/go-kit/log"
-	"net/http"
-
-	httpSwagger "github.com/swaggo/http-swagger"
-
-	httptransport "github.com/go-kit/kit/transport/http"
+	"github.com/go-kit/log/level"
 	"github.com/gorilla/mux"
+	httpSwagger "github.com/swaggo/http-swagger"
+	"net/http"
 )
 
-// NewHTTPHandler initializes and returns a new HTTP handler with all routes defined
+const (
+	apiPrefix = "/api"
+	v1Prefix  = apiPrefix + "/v1/report"
+)
+
 func NewHTTPHandler(svc service.SalesService, logger log.Logger) http.Handler {
 	r := mux.NewRouter()
 
-	// Serve Swagger UI at /docs/
-	r.PathPrefix("/docs/").Handler(httpSwagger.WrapHandler)
+	r.HandleFunc(apiPrefix, func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		err := json.NewEncoder(w).Encode(map[string]interface{}{
+			"versions":      []string{"v1"},
+			"documentation": v1Prefix + "/docs/index.html",
+		})
+		if err != nil {
+			_ = level.Error(logger).Log("msg", "failed to encode API info", "err", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}).Methods("GET")
 
-	apiV1 := r.PathPrefix("/api/v1").Subrouter()
+	registerV1Routes(logger, r, svc)
 
-	// Register the insert sales route
-	apiV1.Handle("/sales", httptransport.NewServer(
+	return r
+}
+
+func registerV1Routes(logger log.Logger, router *mux.Router, svc service.SalesService) {
+	v1 := router.PathPrefix(v1Prefix).Subrouter()
+
+	v1.PathPrefix("/docs/").Handler(httpSwagger.Handler(
+		httpSwagger.URL(v1Prefix+"/docs/doc.json"),
+		httpSwagger.DeepLinking(true),
+		httpSwagger.DocExpansion("list"),
+		httpSwagger.DomID("swagger-ui"),
+	))
+
+	v1.Methods("POST").Path("/sale").Handler(kitHttp.NewServer(
 		MakeInsertSalesEndpoint(svc),
 		decoder.DecodeInsertSalesRequest,
 		encoder.EncodeResponse,
-		httptransport.ServerErrorEncoder(encoder.EncodeError(logger)),
-	)).Methods("POST")
+		kitHttp.ServerErrorEncoder(encoder.EncodeError(logger)),
+	))
 
-	// This expects GET with query parameters: route_id, year, start_time, and employee_id.
-	apiV1.Handle("/sales/trip/cart/employee", httptransport.NewServer(
+	v1.Methods("GET").Path("/trip/cart/employee").Handler(kitHttp.NewServer(
 		MakeGetEmployeeCartsInTripEndpoint(svc),
 		decoder.DecodeGetEmployeeCartsInTripRequest,
 		encoder.EncodeResponse,
-		httptransport.ServerErrorEncoder(encoder.EncodeError(logger)),
-	)).Methods("GET")
+		kitHttp.ServerErrorEncoder(encoder.EncodeError(logger)),
+	))
 
-	apiV1.Handle("/sales/trip/employee_ids", httptransport.NewServer(
+	v1.Methods("GET").Path("/trip/employee_id").Handler(kitHttp.NewServer(
 		MakeGetEmployeeIDsByTripEndpoint(svc),
 		decoder.DecodeGetEmployeeIDsByTripRequest,
 		encoder.EncodeResponse,
-		httptransport.ServerErrorEncoder(encoder.EncodeError(logger)),
-	)).Methods("GET")
+		kitHttp.ServerErrorEncoder(encoder.EncodeError(logger)),
+	))
 
-	apiV1.Handle("/sales/trip/employee_trips", httptransport.NewServer(
+	v1.Methods("GET").Path("/trip/employee_trip").Handler(kitHttp.NewServer(
 		MakeGetEmployeeTripsEndpoint(svc),
 		decoder.DecodeGetEmployeeTripsRequest,
 		encoder.EncodeResponse,
-		httptransport.ServerErrorEncoder(encoder.EncodeError(logger)),
-	)).Methods("GET")
+		kitHttp.ServerErrorEncoder(encoder.EncodeError(logger)),
+	))
 
-	apiV1.Handle("/sales/trip/cart/item/quantity", httptransport.NewServer(
+	v1.Methods("PUT").Path("/trip/cart/item/quantity").Handler(kitHttp.NewServer(
 		MakeUpdateItemQuantityEndpoint(svc),
 		decoder.DecodeUpdateItemQuantityRequest,
 		encoder.EncodeResponse,
-		httptransport.ServerErrorEncoder(encoder.EncodeError(logger)),
-	)).Methods("PUT")
+		kitHttp.ServerErrorEncoder(encoder.EncodeError(logger)),
+	))
 
-	apiV1.Handle("/sales/trip/cart/item", httptransport.NewServer(
+	v1.Methods("DELETE").Path("/trip/cart/item").Handler(kitHttp.NewServer(
 		MakeDeleteItemFromCartEndpoint(svc),
 		decoder.DecodeDeleteItemFromCartRequest,
 		encoder.EncodeResponse,
-		httptransport.ServerErrorEncoder(encoder.EncodeError(logger)),
-	)).Methods("DELETE")
-
-	return r
+		kitHttp.ServerErrorEncoder(encoder.EncodeError(logger)),
+	))
 }
