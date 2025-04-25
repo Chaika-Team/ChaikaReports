@@ -182,7 +182,7 @@ func TestInsertSalesEndpoint(t *testing.T) {
 			handler := httphandler.NewHTTPHandler(svc, log.NewNopLogger())
 
 			// Create HTTP request
-			req, err := http.NewRequest("POST", "/api/v1/sales", bytes.NewBufferString(tt.rawJSON))
+			req, err := http.NewRequest("POST", "/api/v1/report/sale", bytes.NewBufferString(tt.rawJSON))
 			assert.NoError(t, err, "Failed to create new request")
 			req.Header.Set("Content-Type", "application/json")
 
@@ -231,7 +231,7 @@ func TestInsertSalesEndpoint_InvalidRequestType(t *testing.T) {
 	mockRepo.AssertNotCalled(t, "InsertData", mock.Anything, mock.Anything)
 }
 
-// TestGetEmployeeCartsInTripEndpoint tests the GET /api/v1/sales/trip/cart/employee endpoint.
+// TestGetEmployeeCartsInTripEndpoint tests the GET /api/v1/report/sale/trip/cart/employee endpoint.
 func TestGetEmployeeCartsInTripEndpoint(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -342,7 +342,7 @@ func TestGetEmployeeCartsInTripEndpoint(t *testing.T) {
 			handler := httphandler.NewHTTPHandler(svc, log.NewNopLogger())
 
 			// Create GET request for the endpoint
-			req, err := http.NewRequest("GET", "/api/v1/sales/trip/cart/employee", nil)
+			req, err := http.NewRequest("GET", "/api/v1/report/trip/cart/employee", nil)
 			assert.NoError(t, err, "Failed to create new GET request")
 
 			// Set query parameters on the URL
@@ -486,7 +486,7 @@ func TestGetEmployeeIDsByTripEndpoint(t *testing.T) {
 			handler := httphandler.NewHTTPHandler(svc, log.NewNopLogger())
 
 			// Create the GET request for the endpoint.
-			req, err := http.NewRequest("GET", "/api/v1/sales/trip/employee_ids", nil)
+			req, err := http.NewRequest("GET", "/api/v1/report/trip/employee_id", nil)
 			assert.NoError(t, err, "Failed to create new GET request")
 
 			// Set query parameters on the URL.
@@ -628,7 +628,7 @@ func TestGetEmployeeTripsEndpoint(t *testing.T) {
 			handler := httphandler.NewHTTPHandler(svc, log.NewNopLogger())
 
 			// Create a new GET request.
-			req, err := http.NewRequest("GET", "/api/v1/sales/trip/employee_trips", nil)
+			req, err := http.NewRequest("GET", "/api/v1/report/trip/employee_trip", nil)
 			assert.NoError(t, err, "Failed to create new GET request")
 
 			// Set the query parameters.
@@ -683,7 +683,7 @@ func TestGetEmployeeTripsEndpoint_InvalidRequestType(t *testing.T) {
 	mockRepo.AssertNotCalled(t, "GetEmployeeTrips", mock.Anything, mock.Anything, mock.Anything)
 }
 
-// TestUpdateItemQuantityEndpoint tests the PUT /api/v1/sales/trip/cart/item/quantity endpoint.
+// TestUpdateItemQuantityEndpoint tests the PUT /api/v1/report/trip/cart/item/quantity endpoint.
 func TestUpdateItemQuantityEndpoint(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -814,7 +814,7 @@ func TestUpdateItemQuantityEndpoint(t *testing.T) {
 			handler := httphandler.NewHTTPHandler(svc, log.NewNopLogger())
 
 			// Create the PUT request with the test JSON.
-			req, err := http.NewRequest("PUT", "/api/v1/sales/trip/cart/item/quantity", bytes.NewBufferString(tt.rawJSON))
+			req, err := http.NewRequest("PUT", "/api/v1/report/trip/cart/item/quantity", bytes.NewBufferString(tt.rawJSON))
 			assert.NoError(t, err, "Failed to create new PUT request")
 			req.Header.Set("Content-Type", "application/json")
 
@@ -870,7 +870,7 @@ func TestUpdateItemQuantityEndpoint_InvalidRequestType(t *testing.T) {
 	mockRepo.AssertNotCalled(t, "UpdateItemQuantity", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 }
 
-// TestDeleteItemFromCartEndpoint tests the DELETE /api/v1/sales/trip/cart/item endpoint.
+// TestDeleteItemFromCartEndpoint tests the DELETE /api/v1/report/trip/cart/item endpoint.
 func TestDeleteItemFromCartEndpoint(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -995,7 +995,7 @@ func TestDeleteItemFromCartEndpoint(t *testing.T) {
 			handler := httphandler.NewHTTPHandler(svc, log.NewNopLogger())
 
 			// Create the DELETE request with the test JSON.
-			req, err := http.NewRequest("DELETE", "/api/v1/sales/trip/cart/item", bytes.NewBufferString(tt.rawJSON))
+			req, err := http.NewRequest("DELETE", "/api/v1/report/trip/cart/item", bytes.NewBufferString(tt.rawJSON))
 			assert.NoError(t, err, "Failed to create new DELETE request")
 			req.Header.Set("Content-Type", "application/json")
 
