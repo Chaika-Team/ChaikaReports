@@ -152,7 +152,7 @@ definitions:
       message:
         type: string
     type: object
-host: localhost:8080
+host: chaika-soft.ru
 info:
   contact:
     email: support@chaikareports.com
@@ -164,7 +164,7 @@ info:
     url: https://opensource.org/licenses/MIT
   termsOfService: http://swagger.io/terms/
   title: ChaikaReports API
-  version: 1.0.5
+  version: 1.0.6
 paths:
   /sale:
     post:

@@ -13,9 +13,9 @@
             "name": "MIT",
             "url": "https://opensource.org/licenses/MIT"
         },
-        "version": "1.0.5"
+        "version": "1.0.6"
     },
-    "host": "localhost:8080",
+    "host": "chaika-soft.ru",
     "basePath": "/api/v1/report",
     "paths": {
         "/sale": {
