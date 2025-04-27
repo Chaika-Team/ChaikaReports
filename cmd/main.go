@@ -2,7 +2,7 @@ package main
 
 // main.go
 // @title           ChaikaReports API
-// @version         1.0.5
+// @version         1.0.6
 // @description     API documentation for the ChaikaReports microservice.
 // @termsOfService  http://swagger.io/terms/
 
@@ -13,7 +13,7 @@ package main
 // @license.name    MIT
 // @license.url     https://opensource.org/licenses/MIT
 
-// @host            localhost:8080
+// @host            chaika-soft.ru
 // @BasePath        /api/v1/report
 
 import (
@@ -24,12 +24,13 @@ import (
 	"ChaikaReports/internal/service"
 	"context"
 	"fmt"
-	"github.com/go-kit/log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/go-kit/log"
 )
 
 func main() {
