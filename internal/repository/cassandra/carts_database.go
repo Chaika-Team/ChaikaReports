@@ -47,6 +47,19 @@ const insertEmployeeTripsQuery = `
 		end_time)
 	VALUES (?, ?, ?, ?, ?)`
 
+const insertCompletedTripQuery = `
+	INSERT INTO completed_trips (
+	    route_id,
+	    start_time,
+	    year,
+	    synchronized)
+	VALUES (?,?,?,?)`
+
+const insertRouteQuery = `
+	INSERT INTO routes (
+	    route_id)
+	VALUES (?)`
+
 const getEmployeeCartsInTripQuery = `SELECT operation_time, operation_type, product_id, quantity, price
 	FROM operations
 	WHERE route_id = ?
@@ -88,6 +101,18 @@ func (r *SalesRepository) InsertData(ctx context.Context, carriageReport *models
 			&carriageReport.TripID.StartTime,
 			&carriageReport.EndTime,
 		)
+
+		batch.Query(insertCompletedTripQuery,
+			&carriageReport.TripID.RouteID,
+			&carriageReport.TripID.StartTime,
+			&carriageReport.TripID.Year,
+			false,
+		)
+
+		batch.Query(insertRouteQuery,
+			&carriageReport.TripID.RouteID,
+		)
+
 		for _, item := range cart.Items {
 			// Batch query allows to save data integrity by stopping transaction if at least one insertion fails
 			batch.Query(insertOperationQuery,
