@@ -6,8 +6,11 @@ import (
 )
 
 type SalesRepository interface {
-	// InsertData Inserts all data from a Carriage into the Cassandra database
-	InsertData(ctx context.Context, carriageReport *models.Carriage) error
+	// InsertData Inserts all data from a CarriageReport into the Cassandra database
+	InsertData(ctx context.Context, carriageReport *models.CarriageReport) error
+
+	// GetTrip Gets all reports from a single trip
+	GetTrip(ctx context.Context, tripID *models.TripID) (models.Trip, error)
 
 	// GetEmployeeCartsInTrip Gets all carts employee has sold during trip, returns array of Carts
 	GetEmployeeCartsInTrip(ctx context.Context, tripID *models.TripID, employeeID *string) ([]models.Cart, error)
@@ -15,6 +18,7 @@ type SalesRepository interface {
 	// GetEmployeeIDsByTrip Gets all employees in trip
 	GetEmployeeIDsByTrip(ctx context.Context, tripID *models.TripID) ([]string, error)
 
+	// GetEmployeeTrips Gets all trips completed by employee
 	GetEmployeeTrips(ctx context.Context, employeeID string, year string) ([]models.EmployeeTrip, error)
 
 	// UpdateItemQuantity Updates item quantity in cart

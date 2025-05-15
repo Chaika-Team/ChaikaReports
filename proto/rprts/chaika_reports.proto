@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+// pick a proto package name that makes sense for your reports
+package chaika_reports;
+
+import "google/protobuf/timestamp.proto";
+
+// this must match where the generated code will live:
+option go_package = "github.com/yourorg/ChaikaReports/internal/handler/grpc/pb;pb";
+
+// the gRPC service
+service SalesService {
+  // fetch the full trip payload
+  rpc GetTrip(GetTripRequest) returns (GetTripReply);
+}
+
+message GetTripRequest {
+  string                     route_id   = 1;
+  string                     year       = 2;
+  google.protobuf.Timestamp  start_time = 3;
+}
+
+message GetTripReply {
+  Trip trip = 1;
+}
+
+message Trip {
+  repeated Carriage carriage = 1;
+}
+
+message Carriage {
+  TripID                     trip_id     = 1;
+  google.protobuf.Timestamp  end_time    = 2;
+  int32                      carriage_id = 3;
+  repeated Cart              carts       = 4;
+}
+
+message TripID {
+  string                     route_id   = 1;
+  string                     year       = 2;
+  google.protobuf.Timestamp  start_time = 3;
+}
+
+message Cart {
+  CartID           cart_id        = 1;
+  int32            operation_type = 2;
+  repeated Item    items          = 3;
+}
+
+message CartID {
+  string                     employee_id    = 1;
+  google.protobuf.Timestamp  operation_time = 2;
+}
+
+message Item {
+  int32  product_id = 1;
+  int32  quantity   = 2;
+  int64  price      = 3;
+}

@@ -60,6 +60,13 @@ const insertRouteQuery = `
 	    route_id)
 	VALUES (?)`
 
+const getTripQuery = `SELECT route_id, start_time, employee_id, operation_time, product_id, carriage_id, end_time, operation_type, price, quantity
+	FROM operations
+	WHERE route_id = ?
+	AND year = ?
+	AND start_time = ?
+`
+
 const getEmployeeCartsInTripQuery = `SELECT operation_time, operation_type, product_id, quantity, price
 	FROM operations
 	WHERE route_id = ?
@@ -89,8 +96,8 @@ const updateItemQuantityQuery = `UPDATE operations SET quantity = ?
 
 const deleteItemFromCartQuery = `DELETE FROM operations WHERE route_id = ? AND year = ? AND start_time = ? AND employee_id = ? AND operation_time = ? AND product_id = ? IF EXISTS`
 
-// InsertData Inserts all data from a Carriage into the Cassandra database
-func (r *SalesRepository) InsertData(ctx context.Context, carriageReport *models.Carriage) error {
+// InsertData Inserts all data from a CarriageReport into the Cassandra database
+func (r *SalesRepository) InsertData(ctx context.Context, carriageReport *models.CarriageReport) error {
 	batch := r.session.NewBatch(gocql.LoggedBatch).WithContext(ctx)
 	carriageReport.TripID.Year = strconv.Itoa(carriageReport.TripID.StartTime.Year())
 	for _, cart := range carriageReport.Carts {
@@ -137,6 +144,94 @@ func (r *SalesRepository) InsertData(ctx context.Context, carriageReport *models
 		return fmt.Errorf("failed to execute batch: %w", err)
 	}
 	return nil
+}
+
+func (r *SalesRepository) GetTrip(ctx context.Context, tripID *models.TripID) (models.Trip, error) {
+	// Fire the query
+	iter := r.session.
+		Query(getTripQuery, tripID.RouteID, tripID.Year, tripID.StartTime).
+		WithContext(ctx).
+		Iter()
+
+	// We'll build two maps: one from carriageID → *models.CarriageReport,
+	// and one from carriageID → map[cartKey]*models.Cart
+	carriageMap := make(map[int8]*models.CarriageReport, 0)
+	cartMaps := make(map[int8]map[string]*models.Cart, 0)
+
+	// Row‐scan variables
+	var (
+		_routeID   string
+		_startTime time.Time
+		empID      string
+		opTime     time.Time
+		prodID     int
+		carriageID int8
+		endTime    time.Time
+		opType     int8
+		price      int64
+		quantity   int16
+	)
+
+	// Iterate through every operation in this trip
+	for iter.Scan(
+		&_routeID,
+		&_startTime,
+		&empID,
+		&opTime,
+		&prodID,
+		&carriageID,
+		&endTime,
+		&opType,
+		&price,
+		&quantity,
+	) {
+		// 1) ensure we have a CarriageReport object
+		car, ok := carriageMap[carriageID]
+		if !ok {
+			car = &models.CarriageReport{
+				TripID:     *tripID,
+				EndTime:    endTime,
+				CarriageID: carriageID,
+			}
+			carriageMap[carriageID] = car
+			cartMaps[carriageID] = make(map[string]*models.Cart)
+		}
+
+		// 2) aggregate into the right cart
+		cm := cartMaps[carriageID]
+		key := createCartKey(empID, opTime)
+
+		item := createCartItem(prodID, quantity, price)
+		if existingCart, found := cm[key]; found {
+			addItemToExistingCart(existingCart, item)
+		} else {
+			cartID := models.CartID{
+				EmployeeID:    empID,
+				OperationTime: opTime,
+			}
+			cm[key] = createNewCart(cartID, opType, item)
+		}
+	}
+
+	// Close the iterator and catch any error
+	if err := iter.Close(); err != nil {
+		_ = r.log.Log("error", fmt.Sprintf("GetTrip: iter.Close failed: %v", err))
+		return models.Trip{}, err
+	}
+
+	// 3) stitch carts back into each CarriageReport, then collect into the Trip
+	var trip models.Trip
+	for cid, car := range carriageMap {
+		cm := cartMaps[cid]
+		carts := make([]models.Cart, 0, len(cm))
+		for _, c := range cm {
+			carts = append(carts, *c)
+		}
+		car.Carts = carts
+		trip.Carriage = append(trip.Carriage, *car)
+	}
+
+	return trip, nil
 }
 
 // GetEmployeeCartsInTrip Gets all carts employee has sold during trip, returns array of Carts

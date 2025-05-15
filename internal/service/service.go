@@ -7,7 +7,8 @@ import (
 )
 
 type SalesService interface {
-	InsertData(ctx context.Context, carriageReport *models.Carriage) error
+	InsertData(ctx context.Context, carriageReport *models.CarriageReport) error
+	GetTrip(ctx context.Context, tripID *models.TripID) (models.Trip, error)
 	GetEmployeeCartsInTrip(ctx context.Context, tripID *models.TripID, employeeID *string) ([]models.Cart, error)
 	GetEmployeeIDsByTrip(ctx context.Context, tripID *models.TripID) ([]string, error)
 	GetEmployeeTrips(ctx context.Context, employeeID string, year string) ([]models.EmployeeTrip, error)
@@ -25,8 +26,13 @@ func NewSalesService(repo repository.SalesRepository) SalesService {
 }
 
 // InsertData Inserts incoming carriageReport data
-func (s *salesService) InsertData(ctx context.Context, carriageReport *models.Carriage) error {
+func (s *salesService) InsertData(ctx context.Context, carriageReport *models.CarriageReport) error {
 	return s.repo.InsertData(ctx, carriageReport)
+}
+
+// GetTrip Gets all reports from a single trip
+func (s *salesService) GetTrip(ctx context.Context, tripID *models.TripID) (models.Trip, error) {
+	return s.repo.GetTrip(ctx, tripID)
 }
 
 // GetEmployeeCartsInTrip Gets all carts an employee made during trip

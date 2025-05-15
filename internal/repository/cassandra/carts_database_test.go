@@ -298,7 +298,7 @@ func TestInsertData(t *testing.T) {
 	// (Optionally, you can set expectations on fakeBatch.Query if you want to verify the queries added.)
 
 	tripStartTime := time.Date(2023, 1, 15, 10, 0, 1, 0, time.UTC)
-	carriage := &models.Carriage{
+	carriage := &models.CarriageReport{
 		TripID: models.TripID{
 			RouteID:   "route_test",
 			StartTime: tripStartTime,
@@ -346,7 +346,7 @@ func TestInsertData_ExecuteBatchError(t *testing.T) {
 
 	// Create a dummy carriage report.
 	tripStartTime := time.Date(2023, 1, 15, 10, 0, 1, 0, time.UTC)
-	carriage := &models.Carriage{
+	carriage := &models.CarriageReport{
 		TripID: models.TripID{
 			RouteID:   "route_test",
 			StartTime: tripStartTime,
