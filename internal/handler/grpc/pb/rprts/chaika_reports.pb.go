@@ -11,6 +11,7 @@ package pb
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
@@ -128,6 +129,146 @@ func (x *GetTripReply) GetTrip() *Trip {
 	return nil
 }
 
+type DeleteSyncedTripRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	RouteId       string                 `protobuf:"bytes,1,opt,name=route_id,json=routeId,proto3" json:"route_id,omitempty"`
+	StartTime     *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteSyncedTripRequest) Reset() {
+	*x = DeleteSyncedTripRequest{}
+	mi := &file_rprts_chaika_reports_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteSyncedTripRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteSyncedTripRequest) ProtoMessage() {}
+
+func (x *DeleteSyncedTripRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_rprts_chaika_reports_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteSyncedTripRequest.ProtoReflect.Descriptor instead.
+func (*DeleteSyncedTripRequest) Descriptor() ([]byte, []int) {
+	return file_rprts_chaika_reports_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *DeleteSyncedTripRequest) GetRouteId() string {
+	if x != nil {
+		return x.RouteId
+	}
+	return ""
+}
+
+func (x *DeleteSyncedTripRequest) GetStartTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.StartTime
+	}
+	return nil
+}
+
+type AckReply struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Message       string                 `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AckReply) Reset() {
+	*x = AckReply{}
+	mi := &file_rprts_chaika_reports_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AckReply) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AckReply) ProtoMessage() {}
+
+func (x *AckReply) ProtoReflect() protoreflect.Message {
+	mi := &file_rprts_chaika_reports_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AckReply.ProtoReflect.Descriptor instead.
+func (*AckReply) Descriptor() ([]byte, []int) {
+	return file_rprts_chaika_reports_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *AckReply) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+type GetUnsyncedTripsReply struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Trips         []*TripID              `protobuf:"bytes,1,rep,name=trips,proto3" json:"trips,omitempty"` // TripID already has year
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetUnsyncedTripsReply) Reset() {
+	*x = GetUnsyncedTripsReply{}
+	mi := &file_rprts_chaika_reports_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetUnsyncedTripsReply) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetUnsyncedTripsReply) ProtoMessage() {}
+
+func (x *GetUnsyncedTripsReply) ProtoReflect() protoreflect.Message {
+	mi := &file_rprts_chaika_reports_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetUnsyncedTripsReply.ProtoReflect.Descriptor instead.
+func (*GetUnsyncedTripsReply) Descriptor() ([]byte, []int) {
+	return file_rprts_chaika_reports_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *GetUnsyncedTripsReply) GetTrips() []*TripID {
+	if x != nil {
+		return x.Trips
+	}
+	return nil
+}
+
 type Trip struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Carriage      []*Carriage            `protobuf:"bytes,1,rep,name=carriage,proto3" json:"carriage,omitempty"`
@@ -137,7 +278,7 @@ type Trip struct {
 
 func (x *Trip) Reset() {
 	*x = Trip{}
-	mi := &file_rprts_chaika_reports_proto_msgTypes[2]
+	mi := &file_rprts_chaika_reports_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -149,7 +290,7 @@ func (x *Trip) String() string {
 func (*Trip) ProtoMessage() {}
 
 func (x *Trip) ProtoReflect() protoreflect.Message {
-	mi := &file_rprts_chaika_reports_proto_msgTypes[2]
+	mi := &file_rprts_chaika_reports_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -162,7 +303,7 @@ func (x *Trip) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Trip.ProtoReflect.Descriptor instead.
 func (*Trip) Descriptor() ([]byte, []int) {
-	return file_rprts_chaika_reports_proto_rawDescGZIP(), []int{2}
+	return file_rprts_chaika_reports_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *Trip) GetCarriage() []*Carriage {
@@ -184,7 +325,7 @@ type Carriage struct {
 
 func (x *Carriage) Reset() {
 	*x = Carriage{}
-	mi := &file_rprts_chaika_reports_proto_msgTypes[3]
+	mi := &file_rprts_chaika_reports_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -196,7 +337,7 @@ func (x *Carriage) String() string {
 func (*Carriage) ProtoMessage() {}
 
 func (x *Carriage) ProtoReflect() protoreflect.Message {
-	mi := &file_rprts_chaika_reports_proto_msgTypes[3]
+	mi := &file_rprts_chaika_reports_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -209,7 +350,7 @@ func (x *Carriage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Carriage.ProtoReflect.Descriptor instead.
 func (*Carriage) Descriptor() ([]byte, []int) {
-	return file_rprts_chaika_reports_proto_rawDescGZIP(), []int{3}
+	return file_rprts_chaika_reports_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *Carriage) GetTripId() *TripID {
@@ -251,7 +392,7 @@ type TripID struct {
 
 func (x *TripID) Reset() {
 	*x = TripID{}
-	mi := &file_rprts_chaika_reports_proto_msgTypes[4]
+	mi := &file_rprts_chaika_reports_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -263,7 +404,7 @@ func (x *TripID) String() string {
 func (*TripID) ProtoMessage() {}
 
 func (x *TripID) ProtoReflect() protoreflect.Message {
-	mi := &file_rprts_chaika_reports_proto_msgTypes[4]
+	mi := &file_rprts_chaika_reports_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -276,7 +417,7 @@ func (x *TripID) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TripID.ProtoReflect.Descriptor instead.
 func (*TripID) Descriptor() ([]byte, []int) {
-	return file_rprts_chaika_reports_proto_rawDescGZIP(), []int{4}
+	return file_rprts_chaika_reports_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *TripID) GetRouteId() string {
@@ -311,7 +452,7 @@ type Cart struct {
 
 func (x *Cart) Reset() {
 	*x = Cart{}
-	mi := &file_rprts_chaika_reports_proto_msgTypes[5]
+	mi := &file_rprts_chaika_reports_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -323,7 +464,7 @@ func (x *Cart) String() string {
 func (*Cart) ProtoMessage() {}
 
 func (x *Cart) ProtoReflect() protoreflect.Message {
-	mi := &file_rprts_chaika_reports_proto_msgTypes[5]
+	mi := &file_rprts_chaika_reports_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -336,7 +477,7 @@ func (x *Cart) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Cart.ProtoReflect.Descriptor instead.
 func (*Cart) Descriptor() ([]byte, []int) {
-	return file_rprts_chaika_reports_proto_rawDescGZIP(), []int{5}
+	return file_rprts_chaika_reports_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *Cart) GetCartId() *CartID {
@@ -370,7 +511,7 @@ type CartID struct {
 
 func (x *CartID) Reset() {
 	*x = CartID{}
-	mi := &file_rprts_chaika_reports_proto_msgTypes[6]
+	mi := &file_rprts_chaika_reports_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -382,7 +523,7 @@ func (x *CartID) String() string {
 func (*CartID) ProtoMessage() {}
 
 func (x *CartID) ProtoReflect() protoreflect.Message {
-	mi := &file_rprts_chaika_reports_proto_msgTypes[6]
+	mi := &file_rprts_chaika_reports_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -395,7 +536,7 @@ func (x *CartID) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CartID.ProtoReflect.Descriptor instead.
 func (*CartID) Descriptor() ([]byte, []int) {
-	return file_rprts_chaika_reports_proto_rawDescGZIP(), []int{6}
+	return file_rprts_chaika_reports_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *CartID) GetEmployeeId() string {
@@ -423,7 +564,7 @@ type Item struct {
 
 func (x *Item) Reset() {
 	*x = Item{}
-	mi := &file_rprts_chaika_reports_proto_msgTypes[7]
+	mi := &file_rprts_chaika_reports_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -435,7 +576,7 @@ func (x *Item) String() string {
 func (*Item) ProtoMessage() {}
 
 func (x *Item) ProtoReflect() protoreflect.Message {
-	mi := &file_rprts_chaika_reports_proto_msgTypes[7]
+	mi := &file_rprts_chaika_reports_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -448,7 +589,7 @@ func (x *Item) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Item.ProtoReflect.Descriptor instead.
 func (*Item) Descriptor() ([]byte, []int) {
-	return file_rprts_chaika_reports_proto_rawDescGZIP(), []int{7}
+	return file_rprts_chaika_reports_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *Item) GetProductId() int32 {
@@ -476,14 +617,22 @@ var File_rprts_chaika_reports_proto protoreflect.FileDescriptor
 
 const file_rprts_chaika_reports_proto_rawDesc = "" +
 	"\n" +
-	"\x1arprts/chaika_reports.proto\x12\x0echaika_reports\x1a\x1fgoogle/protobuf/timestamp.proto\"z\n" +
+	"\x1arprts/chaika_reports.proto\x12\x0echaika_reports\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"z\n" +
 	"\x0eGetTripRequest\x12\x19\n" +
 	"\broute_id\x18\x01 \x01(\tR\arouteId\x12\x12\n" +
 	"\x04year\x18\x02 \x01(\tR\x04year\x129\n" +
 	"\n" +
 	"start_time\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\tstartTime\"8\n" +
 	"\fGetTripReply\x12(\n" +
-	"\x04trip\x18\x01 \x01(\v2\x14.chaika_reports.TripR\x04trip\"<\n" +
+	"\x04trip\x18\x01 \x01(\v2\x14.chaika_reports.TripR\x04trip\"o\n" +
+	"\x17DeleteSyncedTripRequest\x12\x19\n" +
+	"\broute_id\x18\x01 \x01(\tR\arouteId\x129\n" +
+	"\n" +
+	"start_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\tstartTime\"$\n" +
+	"\bAckReply\x12\x18\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage\"E\n" +
+	"\x15GetUnsyncedTripsReply\x12,\n" +
+	"\x05trips\x18\x01 \x03(\v2\x16.chaika_reports.TripIDR\x05trips\"<\n" +
 	"\x04Trip\x124\n" +
 	"\bcarriage\x18\x01 \x03(\v2\x18.chaika_reports.CarriageR\bcarriage\"\xbf\x01\n" +
 	"\bCarriage\x12/\n" +
@@ -509,9 +658,11 @@ const file_rprts_chaika_reports_proto_rawDesc = "" +
 	"\n" +
 	"product_id\x18\x01 \x01(\x05R\tproductId\x12\x1a\n" +
 	"\bquantity\x18\x02 \x01(\x05R\bquantity\x12\x14\n" +
-	"\x05price\x18\x03 \x01(\x03R\x05price2W\n" +
-	"\fSalesService\x12G\n" +
-	"\aGetTrip\x12\x1e.chaika_reports.GetTripRequest\x1a\x1c.chaika_reports.GetTripReplyB>Z<github.com/yourorg/ChaikaReports/internal/handler/grpc/pb;pbb\x06proto3"
+	"\x05price\x18\x03 \x01(\x03R\x05price2\x81\x02\n" +
+	"\fSalesService\x12Q\n" +
+	"\x10GetUnsyncedTrips\x12\x16.google.protobuf.Empty\x1a%.chaika_reports.GetUnsyncedTripsReply\x12G\n" +
+	"\aGetTrip\x12\x1e.chaika_reports.GetTripRequest\x1a\x1c.chaika_reports.GetTripReply\x12U\n" +
+	"\x10DeleteSyncedTrip\x12'.chaika_reports.DeleteSyncedTripRequest\x1a\x18.chaika_reports.AckReplyB+Z)ChaikaReports/internal/handler/grpc/pb;pbb\x06proto3"
 
 var (
 	file_rprts_chaika_reports_proto_rawDescOnce sync.Once
@@ -525,36 +676,46 @@ func file_rprts_chaika_reports_proto_rawDescGZIP() []byte {
 	return file_rprts_chaika_reports_proto_rawDescData
 }
 
-var file_rprts_chaika_reports_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_rprts_chaika_reports_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_rprts_chaika_reports_proto_goTypes = []any{
-	(*GetTripRequest)(nil),        // 0: chaika_reports.GetTripRequest
-	(*GetTripReply)(nil),          // 1: chaika_reports.GetTripReply
-	(*Trip)(nil),                  // 2: chaika_reports.Trip
-	(*Carriage)(nil),              // 3: chaika_reports.Carriage
-	(*TripID)(nil),                // 4: chaika_reports.TripID
-	(*Cart)(nil),                  // 5: chaika_reports.Cart
-	(*CartID)(nil),                // 6: chaika_reports.CartID
-	(*Item)(nil),                  // 7: chaika_reports.Item
-	(*timestamppb.Timestamp)(nil), // 8: google.protobuf.Timestamp
+	(*GetTripRequest)(nil),          // 0: chaika_reports.GetTripRequest
+	(*GetTripReply)(nil),            // 1: chaika_reports.GetTripReply
+	(*DeleteSyncedTripRequest)(nil), // 2: chaika_reports.DeleteSyncedTripRequest
+	(*AckReply)(nil),                // 3: chaika_reports.AckReply
+	(*GetUnsyncedTripsReply)(nil),   // 4: chaika_reports.GetUnsyncedTripsReply
+	(*Trip)(nil),                    // 5: chaika_reports.Trip
+	(*Carriage)(nil),                // 6: chaika_reports.Carriage
+	(*TripID)(nil),                  // 7: chaika_reports.TripID
+	(*Cart)(nil),                    // 8: chaika_reports.Cart
+	(*CartID)(nil),                  // 9: chaika_reports.CartID
+	(*Item)(nil),                    // 10: chaika_reports.Item
+	(*timestamppb.Timestamp)(nil),   // 11: google.protobuf.Timestamp
+	(*emptypb.Empty)(nil),           // 12: google.protobuf.Empty
 }
 var file_rprts_chaika_reports_proto_depIdxs = []int32{
-	8,  // 0: chaika_reports.GetTripRequest.start_time:type_name -> google.protobuf.Timestamp
-	2,  // 1: chaika_reports.GetTripReply.trip:type_name -> chaika_reports.Trip
-	3,  // 2: chaika_reports.Trip.carriage:type_name -> chaika_reports.Carriage
-	4,  // 3: chaika_reports.Carriage.trip_id:type_name -> chaika_reports.TripID
-	8,  // 4: chaika_reports.Carriage.end_time:type_name -> google.protobuf.Timestamp
-	5,  // 5: chaika_reports.Carriage.carts:type_name -> chaika_reports.Cart
-	8,  // 6: chaika_reports.TripID.start_time:type_name -> google.protobuf.Timestamp
-	6,  // 7: chaika_reports.Cart.cart_id:type_name -> chaika_reports.CartID
-	7,  // 8: chaika_reports.Cart.items:type_name -> chaika_reports.Item
-	8,  // 9: chaika_reports.CartID.operation_time:type_name -> google.protobuf.Timestamp
-	0,  // 10: chaika_reports.SalesService.GetTrip:input_type -> chaika_reports.GetTripRequest
-	1,  // 11: chaika_reports.SalesService.GetTrip:output_type -> chaika_reports.GetTripReply
-	11, // [11:12] is the sub-list for method output_type
-	10, // [10:11] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	11, // 0: chaika_reports.GetTripRequest.start_time:type_name -> google.protobuf.Timestamp
+	5,  // 1: chaika_reports.GetTripReply.trip:type_name -> chaika_reports.Trip
+	11, // 2: chaika_reports.DeleteSyncedTripRequest.start_time:type_name -> google.protobuf.Timestamp
+	7,  // 3: chaika_reports.GetUnsyncedTripsReply.trips:type_name -> chaika_reports.TripID
+	6,  // 4: chaika_reports.Trip.carriage:type_name -> chaika_reports.Carriage
+	7,  // 5: chaika_reports.Carriage.trip_id:type_name -> chaika_reports.TripID
+	11, // 6: chaika_reports.Carriage.end_time:type_name -> google.protobuf.Timestamp
+	8,  // 7: chaika_reports.Carriage.carts:type_name -> chaika_reports.Cart
+	11, // 8: chaika_reports.TripID.start_time:type_name -> google.protobuf.Timestamp
+	9,  // 9: chaika_reports.Cart.cart_id:type_name -> chaika_reports.CartID
+	10, // 10: chaika_reports.Cart.items:type_name -> chaika_reports.Item
+	11, // 11: chaika_reports.CartID.operation_time:type_name -> google.protobuf.Timestamp
+	12, // 12: chaika_reports.SalesService.GetUnsyncedTrips:input_type -> google.protobuf.Empty
+	0,  // 13: chaika_reports.SalesService.GetTrip:input_type -> chaika_reports.GetTripRequest
+	2,  // 14: chaika_reports.SalesService.DeleteSyncedTrip:input_type -> chaika_reports.DeleteSyncedTripRequest
+	4,  // 15: chaika_reports.SalesService.GetUnsyncedTrips:output_type -> chaika_reports.GetUnsyncedTripsReply
+	1,  // 16: chaika_reports.SalesService.GetTrip:output_type -> chaika_reports.GetTripReply
+	3,  // 17: chaika_reports.SalesService.DeleteSyncedTrip:output_type -> chaika_reports.AckReply
+	15, // [15:18] is the sub-list for method output_type
+	12, // [12:15] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_rprts_chaika_reports_proto_init() }
@@ -568,7 +729,7 @@ func file_rprts_chaika_reports_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_rprts_chaika_reports_proto_rawDesc), len(file_rprts_chaika_reports_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

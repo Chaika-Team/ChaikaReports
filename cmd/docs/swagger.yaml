@@ -152,7 +152,7 @@ definitions:
       message:
         type: string
     type: object
-host: chaika-soft.ru
+host: localhost:8080
 info:
   contact:
     email: support@chaikareports.com

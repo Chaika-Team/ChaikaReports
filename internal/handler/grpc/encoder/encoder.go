@@ -39,3 +39,15 @@ func EncodeGetTripReply(trip models.Trip) *pb.GetTripReply {
 	}
 	return out
 }
+
+func EncodeGetUnsyncedTripsReply(list []models.TripID) *pb.GetUnsyncedTripsReply {
+	reply := &pb.GetUnsyncedTripsReply{}
+	for _, t := range list {
+		reply.Trips = append(reply.Trips, &pb.TripID{
+			RouteId:   t.RouteID,
+			Year:      t.Year,
+			StartTime: timestamppb.New(t.StartTime),
+		})
+	}
+	return reply
+}

@@ -4,6 +4,7 @@ import (
 	"ChaikaReports/internal/models"
 	"ChaikaReports/internal/repository"
 	"context"
+	"time"
 )
 
 type SalesService interface {
@@ -12,8 +13,10 @@ type SalesService interface {
 	GetEmployeeCartsInTrip(ctx context.Context, tripID *models.TripID, employeeID *string) ([]models.Cart, error)
 	GetEmployeeIDsByTrip(ctx context.Context, tripID *models.TripID) ([]string, error)
 	GetEmployeeTrips(ctx context.Context, employeeID string, year string) ([]models.EmployeeTrip, error)
+	GetUnsyncedTrips(ctx context.Context) ([]models.TripID, error)
 	UpdateItemQuantity(ctx context.Context, tripID *models.TripID, cartID *models.CartID, productID *int, newQuantity *int16) error
 	DeleteItemFromCart(ctx context.Context, tripID *models.TripID, cartID *models.CartID, productID *int) error
+	DeleteSyncedTrip(ctx context.Context, routeID string, startTime time.Time) error
 }
 
 type salesService struct {
@@ -49,6 +52,10 @@ func (s *salesService) GetEmployeeTrips(ctx context.Context, employeeID string, 
 	return s.repo.GetEmployeeTrips(ctx, employeeID, year)
 }
 
+func (s *salesService) GetUnsyncedTrips(ctx context.Context) ([]models.TripID, error) {
+	return s.repo.GetUnsyncedTrips(ctx)
+}
+
 // UpdateItemQuantity Updates item quantity in cart
 func (s *salesService) UpdateItemQuantity(ctx context.Context, tripID *models.TripID, cartID *models.CartID, productID *int, newQuantity *int16) error {
 	return s.repo.UpdateItemQuantity(ctx, tripID, cartID, productID, newQuantity)
@@ -57,4 +64,9 @@ func (s *salesService) UpdateItemQuantity(ctx context.Context, tripID *models.Tr
 // DeleteItemFromCart Deletes item from cart
 func (s *salesService) DeleteItemFromCart(ctx context.Context, tripID *models.TripID, cartID *models.CartID, productID *int) error {
 	return s.repo.DeleteItemFromCart(ctx, tripID, cartID, productID)
+}
+
+// DeleteSyncedTrip Deletes an already synchronized trip
+func (s *salesService) DeleteSyncedTrip(ctx context.Context, routeID string, startTime time.Time) error {
+	return s.repo.DeleteSyncedTrip(ctx, routeID, startTime)
 }

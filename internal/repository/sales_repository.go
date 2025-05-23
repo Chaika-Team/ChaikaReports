@@ -3,6 +3,7 @@ package repository
 import (
 	"ChaikaReports/internal/models"
 	"context"
+	"time"
 )
 
 type SalesRepository interface {
@@ -21,9 +22,15 @@ type SalesRepository interface {
 	// GetEmployeeTrips Gets all trips completed by employee
 	GetEmployeeTrips(ctx context.Context, employeeID string, year string) ([]models.EmployeeTrip, error)
 
+	// GetUnsyncedTrips Gets all unsynced trips for the unsychronized_trips table
+	GetUnsyncedTrips(ctx context.Context) ([]models.TripID, error)
+
 	// UpdateItemQuantity Updates item quantity in cart
 	UpdateItemQuantity(ctx context.Context, tripID *models.TripID, cartID *models.CartID, productID *int, newQuantity *int16) error
 
 	// DeleteItemFromCart Deletes item from cart
 	DeleteItemFromCart(ctx context.Context, tripID *models.TripID, cartID *models.CartID, productID *int) error
+
+	// DeleteSyncedTrip Deletes a synced trip from the unsynced trip table
+	DeleteSyncedTrip(ctx context.Context, routeID string, startTime time.Time) error
 }

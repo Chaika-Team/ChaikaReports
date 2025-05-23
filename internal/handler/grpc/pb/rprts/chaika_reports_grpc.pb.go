@@ -13,6 +13,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -21,7 +22,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	SalesService_GetTrip_FullMethodName = "/chaika_reports.SalesService/GetTrip"
+	SalesService_GetUnsyncedTrips_FullMethodName = "/chaika_reports.SalesService/GetUnsyncedTrips"
+	SalesService_GetTrip_FullMethodName          = "/chaika_reports.SalesService/GetTrip"
+	SalesService_DeleteSyncedTrip_FullMethodName = "/chaika_reports.SalesService/DeleteSyncedTrip"
 )
 
 // SalesServiceClient is the client API for SalesService service.
@@ -30,8 +33,9 @@ const (
 //
 // the gRPC service
 type SalesServiceClient interface {
-	// fetch the full trip payload
+	GetUnsyncedTrips(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetUnsyncedTripsReply, error)
 	GetTrip(ctx context.Context, in *GetTripRequest, opts ...grpc.CallOption) (*GetTripReply, error)
+	DeleteSyncedTrip(ctx context.Context, in *DeleteSyncedTripRequest, opts ...grpc.CallOption) (*AckReply, error)
 }
 
 type salesServiceClient struct {
@@ -40,6 +44,16 @@ type salesServiceClient struct {
 
 func NewSalesServiceClient(cc grpc.ClientConnInterface) SalesServiceClient {
 	return &salesServiceClient{cc}
+}
+
+func (c *salesServiceClient) GetUnsyncedTrips(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetUnsyncedTripsReply, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetUnsyncedTripsReply)
+	err := c.cc.Invoke(ctx, SalesService_GetUnsyncedTrips_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *salesServiceClient) GetTrip(ctx context.Context, in *GetTripRequest, opts ...grpc.CallOption) (*GetTripReply, error) {
@@ -52,14 +66,25 @@ func (c *salesServiceClient) GetTrip(ctx context.Context, in *GetTripRequest, op
 	return out, nil
 }
 
+func (c *salesServiceClient) DeleteSyncedTrip(ctx context.Context, in *DeleteSyncedTripRequest, opts ...grpc.CallOption) (*AckReply, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AckReply)
+	err := c.cc.Invoke(ctx, SalesService_DeleteSyncedTrip_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SalesServiceServer is the server API for SalesService service.
 // All implementations must embed UnimplementedSalesServiceServer
 // for forward compatibility.
 //
 // the gRPC service
 type SalesServiceServer interface {
-	// fetch the full trip payload
+	GetUnsyncedTrips(context.Context, *emptypb.Empty) (*GetUnsyncedTripsReply, error)
 	GetTrip(context.Context, *GetTripRequest) (*GetTripReply, error)
+	DeleteSyncedTrip(context.Context, *DeleteSyncedTripRequest) (*AckReply, error)
 	mustEmbedUnimplementedSalesServiceServer()
 }
 
@@ -70,8 +95,14 @@ type SalesServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedSalesServiceServer struct{}
 
+func (UnimplementedSalesServiceServer) GetUnsyncedTrips(context.Context, *emptypb.Empty) (*GetUnsyncedTripsReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUnsyncedTrips not implemented")
+}
 func (UnimplementedSalesServiceServer) GetTrip(context.Context, *GetTripRequest) (*GetTripReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetTrip not implemented")
+}
+func (UnimplementedSalesServiceServer) DeleteSyncedTrip(context.Context, *DeleteSyncedTripRequest) (*AckReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteSyncedTrip not implemented")
 }
 func (UnimplementedSalesServiceServer) mustEmbedUnimplementedSalesServiceServer() {}
 func (UnimplementedSalesServiceServer) testEmbeddedByValue()                      {}
@@ -94,6 +125,24 @@ func RegisterSalesServiceServer(s grpc.ServiceRegistrar, srv SalesServiceServer)
 	s.RegisterService(&SalesService_ServiceDesc, srv)
 }
 
+func _SalesService_GetUnsyncedTrips_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SalesServiceServer).GetUnsyncedTrips(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SalesService_GetUnsyncedTrips_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SalesServiceServer).GetUnsyncedTrips(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _SalesService_GetTrip_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetTripRequest)
 	if err := dec(in); err != nil {
@@ -112,6 +161,24 @@ func _SalesService_GetTrip_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SalesService_DeleteSyncedTrip_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteSyncedTripRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SalesServiceServer).DeleteSyncedTrip(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SalesService_DeleteSyncedTrip_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SalesServiceServer).DeleteSyncedTrip(ctx, req.(*DeleteSyncedTripRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SalesService_ServiceDesc is the grpc.ServiceDesc for SalesService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -120,8 +187,16 @@ var SalesService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*SalesServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
+			MethodName: "GetUnsyncedTrips",
+			Handler:    _SalesService_GetUnsyncedTrips_Handler,
+		},
+		{
 			MethodName: "GetTrip",
 			Handler:    _SalesService_GetTrip_Handler,
+		},
+		{
+			MethodName: "DeleteSyncedTrip",
+			Handler:    _SalesService_DeleteSyncedTrip_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

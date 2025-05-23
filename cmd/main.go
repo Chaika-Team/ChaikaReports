@@ -77,7 +77,7 @@ func main() {
 
 	// ——— HTTP server ———
 	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%s", cfg.HTTPServer.Port),
+		Addr:    fmt.Sprintf("%s:%s", cfg.HTTPServer.Host, cfg.HTTPServer.Port),
 		Handler: httpSrvHandler,
 	}
 
@@ -122,7 +122,7 @@ func main() {
 	_ = logger.Log("msg", "shutting down servers", "reason", err)
 
 	// Graceful HTTP shutdown
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.HTTPServer.Timeout)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), cfg.HTTPServer.Timeout*time.Second)
 	defer cancel()
 	if shutdownErr := srv.Shutdown(ctx); shutdownErr != nil {
 		_ = logger.Log("error", "HTTP graceful shutdown failed", "err", shutdownErr)

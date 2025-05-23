@@ -3,15 +3,17 @@ syntax = "proto3";
 // pick a proto package name that makes sense for your reports
 package chaika_reports;
 
+import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 
 // this must match where the generated code will live:
-option go_package = "github.com/yourorg/ChaikaReports/internal/handler/grpc/pb;pb";
+option go_package = "ChaikaReports/internal/handler/grpc/pb;pb";
 
 // the gRPC service
 service SalesService {
-  // fetch the full trip payload
+  rpc GetUnsyncedTrips(google.protobuf.Empty) returns (GetUnsyncedTripsReply);
   rpc GetTrip(GetTripRequest) returns (GetTripReply);
+  rpc DeleteSyncedTrip(DeleteSyncedTripRequest) returns (AckReply);
 }
 
 message GetTripRequest {
@@ -22,6 +24,17 @@ message GetTripRequest {
 
 message GetTripReply {
   Trip trip = 1;
+}
+
+message DeleteSyncedTripRequest {          // <<< only what the helper key needs
+  string                    route_id   = 1;
+  google.protobuf.Timestamp start_time = 2;
+}
+
+message AckReply { string message = 1; }
+
+message GetUnsyncedTripsReply {
+  repeated TripID trips = 1;          // TripID already has year
 }
 
 message Trip {

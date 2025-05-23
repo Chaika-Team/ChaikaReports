@@ -21,6 +21,7 @@ type StorageConfig struct {
 
 type HTTPServerConfig struct {
 	Port    string        `mapstructure:"port" validate:"required"`
+	Host    string        `mapstructure:"host" validate:"required"`
 	Timeout time.Duration `mapstructure:"timeout" validate:"required"`
 }
 

@@ -47,12 +47,11 @@ const insertEmployeeTripsQuery = `
 		end_time)
 	VALUES (?, ?, ?, ?, ?)`
 
-const insertCompletedTripQuery = `
+const insertUnsynchronizedTripQuery = `
 	INSERT INTO completed_trips (
 	    route_id,
 	    start_time,
-	    year,
-	    synchronized)
+	    year,)
 	VALUES (?,?,?,?)`
 
 const insertRouteQuery = `
@@ -85,6 +84,8 @@ const getEmployeeTripsQuery = `SELECT route_id, start_time, end_time
 	WHERE employee_id = ?
       AND year = ?`
 
+const getUnsyncedTripsQuery = `SELECT * FROM unsynchronized_trips`
+
 const updateItemQuantityQuery = `UPDATE operations SET quantity = ? 
     WHERE route_id = ? 
       AND year = ?
@@ -94,7 +95,17 @@ const updateItemQuantityQuery = `UPDATE operations SET quantity = ?
       AND product_id = ?
     IF EXISTS`
 
-const deleteItemFromCartQuery = `DELETE FROM operations WHERE route_id = ? AND year = ? AND start_time = ? AND employee_id = ? AND operation_time = ? AND product_id = ? IF EXISTS`
+const deleteItemFromCartQuery = `DELETE FROM operations WHERE route_id = ?
+      AND year = ?
+      AND start_time = ?
+      AND employee_id = ?
+      AND operation_time = ?
+      AND product_id = ?
+    IF EXISTS`
+
+const deleteTripFromUnsynchronizedTripsQuery = `DELETE FROM unsynchronized_trips WHERE route_id = ?
+	  AND start_time = ?
+	IF EXISTS`
 
 // InsertData Inserts all data from a CarriageReport into the Cassandra database
 func (r *SalesRepository) InsertData(ctx context.Context, carriageReport *models.CarriageReport) error {
@@ -109,11 +120,10 @@ func (r *SalesRepository) InsertData(ctx context.Context, carriageReport *models
 			&carriageReport.EndTime,
 		)
 
-		batch.Query(insertCompletedTripQuery,
+		batch.Query(insertUnsynchronizedTripQuery,
 			&carriageReport.TripID.RouteID,
 			&carriageReport.TripID.StartTime,
 			&carriageReport.TripID.Year,
-			false,
 		)
 
 		batch.Query(insertRouteQuery,
@@ -314,6 +324,29 @@ func (r *SalesRepository) GetEmployeeTrips(ctx context.Context, employeeID strin
 	return employeeTrips, nil
 }
 
+func (r *SalesRepository) GetUnsyncedTrips(ctx context.Context) ([]models.TripID, error) {
+	iter := r.session.
+		Query(getUnsyncedTripsQuery).
+		WithContext(ctx).
+		Iter()
+
+	var res []models.TripID
+	var routeID, year string
+	var start time.Time
+
+	for iter.Scan(&routeID, &start, &year) {
+		res = append(res, models.TripID{
+			RouteID:   routeID,
+			StartTime: start,
+			Year:      year,
+		})
+	}
+	if err := iter.Close(); err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
 // UpdateItemQuantity Updates quantity of items in cart
 func (r *SalesRepository) UpdateItemQuantity(ctx context.Context, tripID *models.TripID, cartID *models.CartID, productID *int, newQuantity *int16) error {
 	applied, err := r.session.Query(updateItemQuantityQuery, newQuantity,
@@ -352,6 +385,23 @@ func (r *SalesRepository) DeleteItemFromCart(ctx context.Context, tripID *models
 
 	if !deleted {
 		return fmt.Errorf("item does not exist")
+	}
+
+	return nil
+}
+
+func (r *SalesRepository) DeleteSyncedTrip(ctx context.Context, routeID string, startTime time.Time) error {
+	deleted, err := r.session.Query(deleteTripFromUnsynchronizedTripsQuery,
+		routeID,
+		startTime).WithContext(ctx).ScanCAS()
+
+	if err != nil {
+		_ = r.log.Log("error", fmt.Sprintf("Failed to delete synced trip from unsynced table %v", err))
+		return err
+	}
+
+	if !deleted {
+		return fmt.Errorf("trip does not exist")
 	}
 
 	return nil
