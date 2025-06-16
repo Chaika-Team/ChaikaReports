@@ -3,8 +3,8 @@ package decoder
 import (
 	"context"
 
-	pb "ChaikaReports/internal/handler/grpc/pb/rprts"
 	"ChaikaReports/internal/models"
+	pb "github.com/Chaika-Team/chaika-proto/gen/rprts"
 )
 
 func DecodeGetTripRequest(_ context.Context, req *pb.GetTripRequest) *models.TripID {

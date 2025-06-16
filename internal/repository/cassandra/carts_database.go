@@ -48,11 +48,11 @@ const insertEmployeeTripsQuery = `
 	VALUES (?, ?, ?, ?, ?)`
 
 const insertUnsynchronizedTripQuery = `
-	INSERT INTO completed_trips (
+	INSERT INTO unsynchronized_trips (
 	    route_id,
 	    start_time,
-	    year,)
-	VALUES (?,?,?,?)`
+	    year)
+	VALUES (?,?,?)`
 
 const insertRouteQuery = `
 	INSERT INTO routes (

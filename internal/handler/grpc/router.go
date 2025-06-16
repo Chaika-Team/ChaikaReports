@@ -3,9 +3,9 @@ package grpc
 import (
 	"ChaikaReports/internal/handler/grpc/decoder"
 	"ChaikaReports/internal/handler/grpc/encoder"
-	pb "ChaikaReports/internal/handler/grpc/pb/rprts"
 	"ChaikaReports/internal/service"
 	"context"
+	pb "github.com/Chaika-Team/chaika-proto/gen/rprts"
 	"github.com/go-kit/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"

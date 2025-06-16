@@ -1,8 +1,8 @@
 package encoder
 
 import (
-	pb "ChaikaReports/internal/handler/grpc/pb/rprts"
 	"ChaikaReports/internal/models"
+	pb "github.com/Chaika-Team/chaika-proto/gen/rprts"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 

@@ -25,6 +25,16 @@ type MockSalesRepository struct {
 	mock.Mock
 }
 
+func (m *MockSalesRepository) GetUnsyncedTrips(ctx context.Context) ([]models.TripID, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (m *MockSalesRepository) DeleteSyncedTrip(ctx context.Context, routeID string, startTime time.Time) error {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (m *MockSalesRepository) InsertData(ctx context.Context, carriageReport *models.CarriageReport) error {
 	args := m.Called(ctx, carriageReport)
 	return args.Error(0)
