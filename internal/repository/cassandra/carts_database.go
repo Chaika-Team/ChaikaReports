@@ -196,9 +196,9 @@ func (r *SalesRepository) GetTrip(ctx context.Context, tripID *models.TripID) (m
 		&quantity,
 	) {
 		// 1) ensure we have a CarriageReport object
-		car, ok := carriageMap[carriageID]
+		_, ok := carriageMap[carriageID]
 		if !ok {
-			car = &models.CarriageReport{
+			car := &models.CarriageReport{
 				TripID:     *tripID,
 				EndTime:    endTime,
 				CarriageID: carriageID,
