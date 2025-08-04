@@ -8,6 +8,10 @@ const (
 	OperationTypeRefund int8 = 2
 )
 
+type Trip struct {
+	Carriage []CarriageReport `json:"carriage_report"`
+}
+
 // Item is a domain model that specifies the quantity, id and price of a product in a cart
 type Item struct {
 	ProductID int   `json:"product_id"`
@@ -21,7 +25,7 @@ type Cart struct {
 	Items         []Item `json:"items"`
 }
 
-type Carriage struct {
+type CarriageReport struct {
 	TripID     TripID    `json:"trip_id"`
 	EndTime    time.Time `json:"end_time"`
 	CarriageID int8      `json:"carriage_id" validate:"required,gte=0,lte=127"`

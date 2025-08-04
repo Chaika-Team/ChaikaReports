@@ -47,6 +47,25 @@ const insertEmployeeTripsQuery = `
 		end_time)
 	VALUES (?, ?, ?, ?, ?)`
 
+const insertUnsynchronizedTripQuery = `
+	INSERT INTO unsynchronized_trips (
+	    route_id,
+	    start_time,
+	    year)
+	VALUES (?,?,?)`
+
+const insertRouteQuery = `
+	INSERT INTO routes (
+	    route_id)
+	VALUES (?)`
+
+const getTripQuery = `SELECT route_id, start_time, employee_id, operation_time, product_id, carriage_id, end_time, operation_type, price, quantity
+	FROM operations
+	WHERE route_id = ?
+	AND year = ?
+	AND start_time = ?
+`
+
 const getEmployeeCartsInTripQuery = `SELECT operation_time, operation_type, product_id, quantity, price
 	FROM operations
 	WHERE route_id = ?
@@ -65,6 +84,8 @@ const getEmployeeTripsQuery = `SELECT route_id, start_time, end_time
 	WHERE employee_id = ?
       AND year = ?`
 
+const getUnsyncedTripsQuery = `SELECT * FROM unsynchronized_trips`
+
 const updateItemQuantityQuery = `UPDATE operations SET quantity = ? 
     WHERE route_id = ? 
       AND year = ?
@@ -74,10 +95,20 @@ const updateItemQuantityQuery = `UPDATE operations SET quantity = ?
       AND product_id = ?
     IF EXISTS`
 
-const deleteItemFromCartQuery = `DELETE FROM operations WHERE route_id = ? AND year = ? AND start_time = ? AND employee_id = ? AND operation_time = ? AND product_id = ? IF EXISTS`
+const deleteItemFromCartQuery = `DELETE FROM operations WHERE route_id = ?
+      AND year = ?
+      AND start_time = ?
+      AND employee_id = ?
+      AND operation_time = ?
+      AND product_id = ?
+    IF EXISTS`
 
-// InsertData Inserts all data from a Carriage into the Cassandra database
-func (r *SalesRepository) InsertData(ctx context.Context, carriageReport *models.Carriage) error {
+const deleteTripFromUnsynchronizedTripsQuery = `DELETE FROM unsynchronized_trips WHERE route_id = ?
+	  AND start_time = ?
+	IF EXISTS`
+
+// InsertData Inserts all data from a CarriageReport into the Cassandra database
+func (r *SalesRepository) InsertData(ctx context.Context, carriageReport *models.CarriageReport) error {
 	batch := r.session.NewBatch(gocql.LoggedBatch).WithContext(ctx)
 	carriageReport.TripID.Year = strconv.Itoa(carriageReport.TripID.StartTime.Year())
 	for _, cart := range carriageReport.Carts {
@@ -88,6 +119,17 @@ func (r *SalesRepository) InsertData(ctx context.Context, carriageReport *models
 			&carriageReport.TripID.StartTime,
 			&carriageReport.EndTime,
 		)
+
+		batch.Query(insertUnsynchronizedTripQuery,
+			&carriageReport.TripID.RouteID,
+			&carriageReport.TripID.StartTime,
+			&carriageReport.TripID.Year,
+		)
+
+		batch.Query(insertRouteQuery,
+			&carriageReport.TripID.RouteID,
+		)
+
 		for _, item := range cart.Items {
 			// Batch query allows to save data integrity by stopping transaction if at least one insertion fails
 			batch.Query(insertOperationQuery,
@@ -112,6 +154,94 @@ func (r *SalesRepository) InsertData(ctx context.Context, carriageReport *models
 		return fmt.Errorf("failed to execute batch: %w", err)
 	}
 	return nil
+}
+
+func (r *SalesRepository) GetTrip(ctx context.Context, tripID *models.TripID) (models.Trip, error) {
+	// Fire the query
+	iter := r.session.
+		Query(getTripQuery, tripID.RouteID, tripID.Year, tripID.StartTime).
+		WithContext(ctx).
+		Iter()
+
+	// We'll build two maps: one from carriageID → *models.CarriageReport,
+	// and one from carriageID → map[cartKey]*models.Cart
+	carriageMap := make(map[int8]*models.CarriageReport, 0)
+	cartMaps := make(map[int8]map[string]*models.Cart, 0)
+
+	// Row‐scan variables
+	var (
+		_routeID   string
+		_startTime time.Time
+		empID      string
+		opTime     time.Time
+		prodID     int
+		carriageID int8
+		endTime    time.Time
+		opType     int8
+		price      int64
+		quantity   int16
+	)
+
+	// Iterate through every operation in this trip
+	for iter.Scan(
+		&_routeID,
+		&_startTime,
+		&empID,
+		&opTime,
+		&prodID,
+		&carriageID,
+		&endTime,
+		&opType,
+		&price,
+		&quantity,
+	) {
+		// 1) ensure we have a CarriageReport object
+		_, ok := carriageMap[carriageID]
+		if !ok {
+			car := &models.CarriageReport{
+				TripID:     *tripID,
+				EndTime:    endTime,
+				CarriageID: carriageID,
+			}
+			carriageMap[carriageID] = car
+			cartMaps[carriageID] = make(map[string]*models.Cart)
+		}
+
+		// 2) aggregate into the right cart
+		cm := cartMaps[carriageID]
+		key := createCartKey(empID, opTime)
+
+		item := createCartItem(prodID, quantity, price)
+		if existingCart, found := cm[key]; found {
+			addItemToExistingCart(existingCart, item)
+		} else {
+			cartID := models.CartID{
+				EmployeeID:    empID,
+				OperationTime: opTime,
+			}
+			cm[key] = createNewCart(cartID, opType, item)
+		}
+	}
+
+	// Close the iterator and catch any error
+	if err := iter.Close(); err != nil {
+		_ = r.log.Log("error", fmt.Sprintf("GetTrip: iter.Close failed: %v", err))
+		return models.Trip{}, err
+	}
+
+	// 3) stitch carts back into each CarriageReport, then collect into the Trip
+	var trip models.Trip
+	for cid, car := range carriageMap {
+		cm := cartMaps[cid]
+		carts := make([]models.Cart, 0, len(cm))
+		for _, c := range cm {
+			carts = append(carts, *c)
+		}
+		car.Carts = carts
+		trip.Carriage = append(trip.Carriage, *car)
+	}
+
+	return trip, nil
 }
 
 // GetEmployeeCartsInTrip Gets all carts employee has sold during trip, returns array of Carts
@@ -194,6 +324,29 @@ func (r *SalesRepository) GetEmployeeTrips(ctx context.Context, employeeID strin
 	return employeeTrips, nil
 }
 
+func (r *SalesRepository) GetUnsyncedTrips(ctx context.Context) ([]models.TripID, error) {
+	iter := r.session.
+		Query(getUnsyncedTripsQuery).
+		WithContext(ctx).
+		Iter()
+
+	var res []models.TripID
+	var routeID, year string
+	var start time.Time
+
+	for iter.Scan(&routeID, &start, &year) {
+		res = append(res, models.TripID{
+			RouteID:   routeID,
+			StartTime: start,
+			Year:      year,
+		})
+	}
+	if err := iter.Close(); err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
 // UpdateItemQuantity Updates quantity of items in cart
 func (r *SalesRepository) UpdateItemQuantity(ctx context.Context, tripID *models.TripID, cartID *models.CartID, productID *int, newQuantity *int16) error {
 	applied, err := r.session.Query(updateItemQuantityQuery, newQuantity,
@@ -232,6 +385,23 @@ func (r *SalesRepository) DeleteItemFromCart(ctx context.Context, tripID *models
 
 	if !deleted {
 		return fmt.Errorf("item does not exist")
+	}
+
+	return nil
+}
+
+func (r *SalesRepository) DeleteSyncedTrip(ctx context.Context, routeID string, startTime time.Time) error {
+	deleted, err := r.session.Query(deleteTripFromUnsynchronizedTripsQuery,
+		routeID,
+		startTime).WithContext(ctx).ScanCAS()
+
+	if err != nil {
+		_ = r.log.Log("error", fmt.Sprintf("Failed to delete synced trip from unsynced table %v", err))
+		return err
+	}
+
+	if !deleted {
+		return fmt.Errorf("trip does not exist")
 	}
 
 	return nil

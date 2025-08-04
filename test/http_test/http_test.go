@@ -25,9 +25,29 @@ type MockSalesRepository struct {
 	mock.Mock
 }
 
-func (m *MockSalesRepository) InsertData(ctx context.Context, carriageReport *models.Carriage) error {
+func (m *MockSalesRepository) GetUnsyncedTrips(ctx context.Context) ([]models.TripID, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (m *MockSalesRepository) DeleteSyncedTrip(ctx context.Context, routeID string, startTime time.Time) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (m *MockSalesRepository) InsertData(ctx context.Context, carriageReport *models.CarriageReport) error {
 	args := m.Called(ctx, carriageReport)
 	return args.Error(0)
+}
+
+func (m *MockSalesRepository) GetTrip(ctx context.Context, tripID *models.TripID) (models.Trip, error) {
+	args := m.Called(ctx, tripID)
+	// if the first argument isn't nil and can be asserted to models.Trip, return it
+	if trip, ok := args.Get(0).(models.Trip); ok {
+		return trip, args.Error(1)
+	}
+	// otherwise return the zero‐value of models.Trip
+	return models.Trip{}, args.Error(1)
 }
 
 func (m *MockSalesRepository) GetEmployeeCartsInTrip(ctx context.Context, tripID *models.TripID, employeeID *string) ([]models.Cart, error) {
@@ -97,7 +117,7 @@ func TestInsertSalesEndpoint(t *testing.T) {
    		  ]
    		}`,
 			mockSetup: func(m *MockSalesRepository) {
-				m.On("InsertData", mock.Anything, mock.AnythingOfType("*models.Carriage")).Return(nil)
+				m.On("InsertData", mock.Anything, mock.AnythingOfType("*models.CarriageReport")).Return(nil)
 			},
 			expectedStatus: http.StatusOK,
 			expectedBody: schemas.InsertSalesResponse{
@@ -204,7 +224,7 @@ func TestInsertSalesEndpoint(t *testing.T) {
 
 			// Assert that InsertData was called if expected
 			if tt.expectedStatus == http.StatusOK {
-				mockRepo.AssertCalled(t, "InsertData", mock.Anything, mock.AnythingOfType("*models.Carriage"))
+				mockRepo.AssertCalled(t, "InsertData", mock.Anything, mock.AnythingOfType("*models.CarriageReport"))
 			} else {
 				mockRepo.AssertNotCalled(t, "InsertData", mock.Anything, mock.Anything)
 			}
@@ -220,7 +240,7 @@ func TestInsertSalesEndpoint_InvalidRequestType(t *testing.T) {
 	// Build the InsertSales endpoint.
 	endpoint := httphandler.MakeInsertSalesEndpoint(svc)
 
-	// Call the endpoint with an invalid request type (a string instead of *models.Carriage).
+	// Call the endpoint with an invalid request type (a string instead of *models.CarriageReport).
 	resp, err := endpoint(context.Background(), "this is not a carriage")
 
 	// Expect a nil response and an error indicating "invalid request type".

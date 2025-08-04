@@ -19,15 +19,24 @@ type StorageConfig struct {
 	RetryAttempts int           `mapstructure:"retry_attempts" validate:"required"`
 }
 
-type ServerConfig struct {
+type HTTPServerConfig struct {
 	Port    string        `mapstructure:"port" validate:"required"`
+	Host    string        `mapstructure:"host" validate:"required"`
 	Timeout time.Duration `mapstructure:"timeout" validate:"required"`
 }
 
+type GRPCServerConfig struct {
+	Host     string        `mapstructure:"host" validate:"required"`
+	Port     string        `mapstructure:"port" validate:"required"`
+	Timeout  time.Duration `mapstructure:"timeout" validate:"required"`
+	Protocol string        `mapstructure:"protocol" validate:"required"`
+}
+
 type Config struct {
-	Cassandra     StorageConfig `mapstructure:"cassandra"`
-	CassandraTest StorageConfig `mapstructure:"cassandra-test"`
-	Server        ServerConfig  `mapstructure:"http-server"`
+	Cassandra     StorageConfig    `mapstructure:"cassandra"`
+	CassandraTest StorageConfig    `mapstructure:"cassandra-test"`
+	HTTPServer    HTTPServerConfig `mapstructure:"http-server"`
+	GRPCServer    GRPCServerConfig `mapstructure:"grpc-server"`
 }
 
 func LoadConfig(configPath string) (*Config, error) {

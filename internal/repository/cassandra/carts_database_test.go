@@ -202,6 +202,86 @@ func (f *fakeIterTripWithCloseError) Close() error {
 	return fmt.Errorf("trip iter close error")
 }
 
+// --- Used in TestGetTrip ---
+
+type tripOpRow struct {
+	routeID       string
+	startTime     time.Time
+	employeeID    string
+	operationTime time.Time
+	productID     int
+	carriageID    int8
+	endTime       time.Time
+	operationType int8
+	price         int64
+	quantity      int16
+}
+
+type fakeTripIter struct {
+	rows     []tripOpRow
+	index    int
+	closeErr error
+}
+
+func (f *fakeTripIter) Scan(dest ...interface{}) bool {
+	if f.index >= len(f.rows) {
+		return false
+	}
+	r := f.rows[f.index]
+	f.index++
+
+	// 9 columns
+	if len(dest) != 10 {
+		return false
+	}
+
+	*dest[0].(*string) = r.routeID
+	*dest[1].(*time.Time) = r.startTime
+	*dest[2].(*string) = r.employeeID
+	*dest[3].(*time.Time) = r.operationTime
+	*dest[4].(*int) = r.productID
+	*dest[5].(*int8) = r.carriageID
+	*dest[6].(*time.Time) = r.endTime
+	*dest[7].(*int8) = r.operationType
+	*dest[8].(*int64) = r.price
+	*dest[9].(*int16) = r.quantity
+	return true
+}
+
+func (f *fakeTripIter) Close() error {
+	return f.closeErr
+}
+
+// --- Used in TestGetUnsyncedTrips ---
+type unsyncRow struct {
+	routeID   string
+	startTime time.Time
+	year      string
+}
+
+type fakeUnsyncIter struct {
+	rows  []unsyncRow
+	index int
+	err   error
+}
+
+func (f *fakeUnsyncIter) Scan(dest ...interface{}) bool {
+	if f.index >= len(f.rows) {
+		return false
+	}
+	r := f.rows[f.index]
+	f.index++
+	if len(dest) != 3 {
+		return false
+	}
+	*dest[0].(*string) = r.routeID
+	*dest[1].(*time.Time) = r.startTime
+	*dest[2].(*string) = r.year
+	return true
+}
+
+func (f *fakeUnsyncIter) Close() error { return f.err }
+
 // --- MOCK TYPES ---
 
 // MockSession implements cassandra.CassandraSession.
@@ -290,7 +370,7 @@ func TestInsertData(t *testing.T) {
 
 	// Prepare a fake batch.
 	fakeBatch := new(FakeBatch)
-	fakeBatch.On("Query", mock.Anything, mock.Anything).Times(2).Return()
+	fakeBatch.On("Query", mock.Anything, mock.Anything).Times(4).Return()
 	fakeBatch.On("WithContext", mock.Anything).Return(fakeBatch)
 	mockSession.On("NewBatch", gocql.LoggedBatch).Return(fakeBatch)
 	mockSession.On("ExecuteBatch", fakeBatch).Return(nil)
@@ -298,7 +378,7 @@ func TestInsertData(t *testing.T) {
 	// (Optionally, you can set expectations on fakeBatch.Query if you want to verify the queries added.)
 
 	tripStartTime := time.Date(2023, 1, 15, 10, 0, 1, 0, time.UTC)
-	carriage := &models.Carriage{
+	carriage := &models.CarriageReport{
 		TripID: models.TripID{
 			RouteID:   "route_test",
 			StartTime: tripStartTime,
@@ -336,7 +416,7 @@ func TestInsertData_ExecuteBatchError(t *testing.T) {
 	fakeBatch.On("WithContext", mock.Anything).Return(fakeBatch)
 	// In this test we have one cart with one employee trip insertion and one item insertion.
 	// Therefore, we expect two calls to Query.
-	fakeBatch.On("Query", mock.Anything, mock.Anything).Times(2).Return()
+	fakeBatch.On("Query", mock.Anything, mock.Anything).Times(4).Return()
 
 	// Set up the session so that when NewBatch is called it returns our fake batch.
 	mockSession.On("NewBatch", gocql.LoggedBatch).Return(fakeBatch)
@@ -346,7 +426,7 @@ func TestInsertData_ExecuteBatchError(t *testing.T) {
 
 	// Create a dummy carriage report.
 	tripStartTime := time.Date(2023, 1, 15, 10, 0, 1, 0, time.UTC)
-	carriage := &models.Carriage{
+	carriage := &models.CarriageReport{
 		TripID: models.TripID{
 			RouteID:   "route_test",
 			StartTime: tripStartTime,
@@ -454,8 +534,7 @@ func TestGetEmployeeCartsInTrip_AggregateCloseError(t *testing.T) {
 	mockSession := new(MockSession)
 	repo := NewSalesRepository(mockSession, log.NewNopLogger())
 
-	// Create a fake iterator that returns an error on its first Close() call.
-	fakeIter := &fakeIterWithError{errorOnCall: 1} // first call returns error
+	fakeIter := &fakeIterWithError{errorOnCall: 1}
 
 	fakeQuery := new(FakeQuery)
 	fakeQuery.On("WithContext", mock.Anything).Return(fakeQuery)
@@ -466,6 +545,7 @@ func TestGetEmployeeCartsInTrip_AggregateCloseError(t *testing.T) {
 
 	tripID := &models.TripID{
 		RouteID:   "route_test",
+		Year:      "year",
 		StartTime: time.Date(2023, 1, 15, 10, 0, 1, 0, time.UTC),
 	}
 	empID := "emp123"
@@ -885,4 +965,169 @@ func TestDeleteItemFromCart_NotDeleted(t *testing.T) {
 
 	mockSession.AssertExpectations(t)
 	fakeQuery.AssertExpectations(t)
+}
+
+func TestGetTrip(t *testing.T) {
+	mockSession := new(MockSession)
+	repo := NewSalesRepository(mockSession, log.NewNopLogger())
+
+	start := time.Date(2023, 1, 15, 10, 0, 0, 0, time.UTC)
+	end := start.Add(time.Hour)
+
+	iter := &fakeTripIter{
+		rows: []tripOpRow{
+			// two items in same cart (same emp / opTime) in carriage 1
+			{"r1", start, "empA", start.Add(30 * time.Minute), 1, 1, end, 0, 100, 2},
+			{"r1", start, "empA", start.Add(30 * time.Minute), 2, 1, end, 0, 200, 5},
+			// another cart in same carriage
+			{"r1", start, "empB", start.Add(40 * time.Minute), 3, 1, end, 1, 150, 1},
+			// carriage 2
+			{"r1", start, "empA", start.Add(50 * time.Minute), 4, 2, end, 0, 50, 3},
+		},
+	}
+
+	fakeQuery := new(FakeQuery)
+	fakeQuery.On("WithContext", mock.Anything).Return(fakeQuery)
+	fakeQuery.On("Iter").Return(iter)
+	mockSession.
+		On("Query", mock.Anything, mock.Anything).
+		Return(fakeQuery)
+
+	tripID := &models.TripID{RouteID: "r1", Year: "2023", StartTime: start}
+
+	got, err := repo.GetTrip(context.Background(), tripID)
+	assert.NoError(t, err)
+
+	// expect two carriages
+	assert.Len(t, got.Carriage, 2)
+
+	// carriage 1: two carts, first cart has two items
+	var c1 models.CarriageReport
+	for _, c := range got.Carriage {
+		if c.CarriageID == 1 {
+			c1 = c
+			break
+		}
+	}
+	assert.Len(t, c1.Carts, 2)
+
+	for _, cart := range c1.Carts {
+		if cart.CartID.EmployeeID == "empA" {
+			assert.Len(t, cart.Items, 2)
+		}
+	}
+
+	mockSession.AssertExpectations(t)
+	fakeQuery.AssertExpectations(t)
+}
+
+/* ----------------------- GetTrip: iterator.Close error -------------------- */
+
+func TestGetTrip_CloseError(t *testing.T) {
+	mockSession := new(MockSession)
+	repo := NewSalesRepository(mockSession, log.NewNopLogger())
+
+	iter := &fakeTripIter{closeErr: fmt.Errorf("close boom")}
+	fakeQuery := new(FakeQuery)
+	fakeQuery.On("WithContext", mock.Anything).Return(fakeQuery)
+	fakeQuery.On("Iter").Return(iter)
+	mockSession.On("Query", mock.Anything, mock.Anything).Return(fakeQuery)
+
+	tripID := &models.TripID{RouteID: "r1", Year: "2023", StartTime: time.Now()}
+	_, err := repo.GetTrip(context.Background(), tripID)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "close boom")
+}
+
+// -------------------
+
+func TestGetUnsyncedTrips_Happy(t *testing.T) {
+	mockSession := new(MockSession)
+	repo := NewSalesRepository(mockSession, log.NewNopLogger())
+
+	rows := []unsyncRow{{"r1", time.Now(), "2023"}}
+	iter := &fakeUnsyncIter{rows: rows}
+	fq := new(FakeQuery)
+	fq.On("WithContext", mock.Anything).Return(fq)
+	fq.On("Iter").Return(iter)
+	mockSession.On("Query", getUnsyncedTripsQuery, mock.Anything).Return(fq)
+
+	res, err := repo.GetUnsyncedTrips(context.Background())
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(res))
+}
+
+func TestGetUnsyncedTrips_Empty(t *testing.T) {
+	mockSession := new(MockSession)
+	repo := NewSalesRepository(mockSession, log.NewNopLogger())
+
+	iter := &fakeUnsyncIter{} // no rows
+	fq := new(FakeQuery)
+	fq.On("WithContext", mock.Anything).Return(fq)
+	fq.On("Iter").Return(iter)
+	mockSession.On("Query", getUnsyncedTripsQuery, mock.Anything).Return(fq)
+
+	res, err := repo.GetUnsyncedTrips(context.Background())
+	assert.NoError(t, err)
+	assert.Empty(t, res)
+}
+
+func TestGetUnsyncedTrips_CloseError(t *testing.T) {
+	mockSession := new(MockSession)
+	repo := NewSalesRepository(mockSession, log.NewNopLogger())
+
+	iter := &fakeUnsyncIter{err: fmt.Errorf("iter close")}
+	fq := new(FakeQuery)
+	fq.On("WithContext", mock.Anything).Return(fq)
+	fq.On("Iter").Return(iter)
+	mockSession.On("Query", getUnsyncedTripsQuery, mock.Anything).Return(fq)
+
+	_, err := repo.GetUnsyncedTrips(context.Background())
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "iter close")
+}
+
+func TestDeleteSyncedTrip_Success(t *testing.T) {
+	mockSession := new(MockSession)
+	repo := NewSalesRepository(mockSession, log.NewNopLogger())
+
+	fq := new(FakeQuery)
+	fq.On("WithContext", mock.Anything).Return(fq)
+	fq.On("ScanCAS", mock.Anything).Return(true, nil)
+	mockSession.On("Query", deleteTripFromUnsynchronizedTripsQuery, mock.Anything).Return(fq)
+
+	err := repo.DeleteSyncedTrip(context.Background(), "r1", time.Now())
+	assert.NoError(t, err)
+	mockSession.AssertExpectations(t)
+}
+
+func TestDeleteSyncedTrip_NotExists(t *testing.T) {
+	mockSession := new(MockSession)
+	repo := NewSalesRepository(mockSession, log.NewNopLogger())
+
+	fq := new(FakeQuery)
+	fq.On("WithContext", mock.Anything).Return(fq)
+	fq.On("ScanCAS", mock.Anything).Return(false, nil)
+	mockSession.On("Query", deleteTripFromUnsynchronizedTripsQuery, mock.Anything, mock.Anything).
+		Return(fq)
+
+	err := repo.DeleteSyncedTrip(context.Background(), "r1", time.Now())
+	assert.Error(t, err)
+	assert.EqualError(t, err, "trip does not exist")
+}
+
+func TestDeleteSyncedTrip_ScanError(t *testing.T) {
+	mockSession := new(MockSession)
+	repo := NewSalesRepository(mockSession, log.NewNopLogger())
+
+	scanErr := fmt.Errorf("scan err")
+	fq := new(FakeQuery)
+	fq.On("WithContext", mock.Anything).Return(fq)
+	fq.On("ScanCAS", mock.Anything).Return(false, scanErr)
+	mockSession.On("Query", deleteTripFromUnsynchronizedTripsQuery, mock.Anything, mock.Anything).
+		Return(fq)
+
+	err := repo.DeleteSyncedTrip(context.Background(), "r1", time.Now())
+	assert.Error(t, err)
+	assert.Equal(t, scanErr, err)
 }

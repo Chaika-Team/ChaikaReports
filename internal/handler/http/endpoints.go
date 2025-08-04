@@ -30,7 +30,7 @@ const (
 // @Router       /sale [post]
 func MakeInsertSalesEndpoint(svc service.SalesService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		carriage, ok := request.(*models.Carriage)
+		carriage, ok := request.(*models.CarriageReport)
 		if !ok {
 			return nil, errors.New(invalidRequestTypeErrorMessage)
 		}

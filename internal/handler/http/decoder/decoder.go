@@ -21,7 +21,7 @@ func DecodeInsertSalesRequest(_ context.Context, r *http.Request) (interface{}, 
 		return nil, errors.New(invalidRequestBodyErrorMessage)
 	}
 
-	// Convert schemas.InsertSalesRequest to models.Carriage
+	// Convert schemas.InsertSalesRequest to models.CarriageReport
 	carriageStartTime, err := time.Parse(time.RFC3339, req.TripID.StartTime)
 	if err != nil {
 		return nil, errors.New("invalid trip start_time format")
@@ -71,7 +71,7 @@ func DecodeInsertSalesRequest(_ context.Context, r *http.Request) (interface{}, 
 		carts = append(carts, cart)
 	}
 
-	carriage := &models.Carriage{
+	carriage := &models.CarriageReport{
 		TripID: models.TripID{
 			RouteID:   req.TripID.RouteID,
 			StartTime: carriageStartTime,

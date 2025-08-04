@@ -164,7 +164,7 @@ info:
     url: https://opensource.org/licenses/MIT
   termsOfService: http://swagger.io/terms/
   title: ChaikaReports API
-  version: 1.0.6
+  version: 1.0.7
 paths:
   /sale:
     post:
