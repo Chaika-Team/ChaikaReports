@@ -2,7 +2,7 @@ package main
 
 // main.go
 // @title           ChaikaReports API
-// @version         1.0.6
+// @version         1.0.7
 // @description     API documentation for the ChaikaReports microservice.
 // @termsOfService  http://swagger.io/terms/
 //
