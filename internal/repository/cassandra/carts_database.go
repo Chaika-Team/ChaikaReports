@@ -287,29 +287,31 @@ func (r *SalesRepository) GetEmployeeCartsInTripPaged(
 	cursorB64 string,
 ) ([]models.Cart, string, error) {
 
-	// Decode our opaque cursor (if any)
+	// Decode cursor (only error if non-empty garbage)
 	cur, err := decodeCursor(cursorB64)
 	if err != nil {
 		_ = r.log.Log("error", fmt.Sprintf("invalid cursor: %v", err))
 		return nil, "", fmt.Errorf("invalid cursor")
 	}
 
-	// Pick the right base query
-	var iter Iter
-	if cur == nil {
-		iter = r.session.Query(
-			getEmployeeCartsInTripQuery,
-			&tripID.RouteID, &tripID.Year, &tripID.StartTime, &employeeID,
-		).WithContext(ctx).Iter()
-	} else {
-		iter = r.session.Query(
-			getEmployeeCartsInTripAfterCursorQuery,
-			&tripID.RouteID, &tripID.Year, &tripID.StartTime, &employeeID,
-			&cur.LastOpTime,
-		).WithContext(ctx).Iter()
-	}
+	// Choose iterator
+	iter := r.selectCartsIter(ctx, tripID, employeeID, cur)
 
-	carts := make([]models.Cart, 0, cartLimit)
+	// Unlimited mode if no positive limit provided
+	unlimited := cartLimit <= 0
+
+	// Preallocate reasonably only when limited
+	var carts []models.Cart
+	if !unlimited {
+		// cap at a small bound to avoid oversized preallocs in tests/CI
+		capHint := cartLimit
+		if capHint > 1024 {
+			capHint = 1024
+		}
+		carts = make([]models.Cart, 0, capHint)
+	} else {
+		carts = make([]models.Cart, 0)
+	}
 
 	// Row vars
 	var (
@@ -322,49 +324,48 @@ func (r *SalesRepository) GetEmployeeCartsInTripPaged(
 
 	// Current cart under construction
 	var (
-		curOpTime     time.Time
-		curCart       *models.Cart
-		lastProdInCar int // track the max product_id we saw in THIS cart
-		haveCart      bool
+		curOpTime time.Time
+		curCart   *models.Cart
+		haveCart  bool
 	)
 
-	flushCart := func() {
-		if curCart != nil {
-			carts = append(carts, *curCart)
-			curCart = nil
-			haveCart = false
+	startCart := func(op time.Time, t int8) {
+		curOpTime = op
+		curCart = &models.Cart{
+			CartID: models.CartID{
+				EmployeeID:    employeeID,
+				OperationTime: op,
+			},
+			OperationType: t,
+			Items:         []models.Item{},
 		}
+		haveCart = true
+	}
+
+	emitAndMaybeReturn := func() (stop bool, next string, retErr error) {
+		carts = append(carts, *curCart)
+		if unlimited || len(carts) < cartLimit {
+			return false, "", nil
+		}
+		// limit reached -> build cursor from the LAST emitted cart's op time
+		nextCur := cartCursor{LastOpTime: curOpTime}
+		if err := iter.Close(); err != nil {
+			_ = r.log.Log("error", fmt.Sprintf("iter.Close failed: %v", err))
+			return true, "", err
+		}
+		return true, encodeCursor(nextCur), nil
 	}
 
 	for iter.Scan(&opTime, &opType, &pid, &qty, &price) {
-		// New cart boundary (grouped by operation_time)
-		if !haveCart || !opTime.Equal(curOpTime) {
-			// We’re switching carts: flush the previous one if present
-			if haveCart {
-				flushCart()
-				if len(carts) == cartLimit {
-					// We just emitted the Nth full cart → build the next cursor
-					next := cartCursor{
-						LastOpTime: curOpTime,
-					}
-					if err := iter.Close(); err != nil {
-						return nil, "", err
-					}
-					return carts, encodeCursor(next), nil
-				}
+		if !haveCart {
+			startCart(opTime, opType)
+		} else if !opTime.Equal(curOpTime) {
+			// Cart boundary
+			stop, next, retErr := emitAndMaybeReturn()
+			if stop || retErr != nil {
+				return carts, next, retErr
 			}
-			// Start a new cart
-			curOpTime = opTime
-			curCart = &models.Cart{
-				CartID: models.CartID{
-					EmployeeID:    employeeID,
-					OperationTime: opTime,
-				},
-				OperationType: opType,
-				Items:         []models.Item{},
-			}
-			lastProdInCar = -1
-			haveCart = true
+			startCart(opTime, opType)
 		}
 
 		// Append item to current cart
@@ -373,13 +374,11 @@ func (r *SalesRepository) GetEmployeeCartsInTripPaged(
 			Quantity:  qty,
 			Price:     price,
 		})
-		if pid > lastProdInCar {
-			lastProdInCar = pid
-		}
 	}
 
+	// Emit trailing cart (if any)
 	if haveCart {
-		flushCart()
+		carts = append(carts, *curCart)
 	}
 
 	if err := iter.Close(); err != nil {
@@ -387,6 +386,7 @@ func (r *SalesRepository) GetEmployeeCartsInTripPaged(
 		return nil, "", err
 	}
 
+	// No more pages if we didn’t hit the limit
 	return carts, "", nil
 }
 
@@ -571,6 +571,25 @@ func aggregateCartsFromRows(iter Iter, employeeID string) ([]models.Cart, error)
 	}
 
 	return carts, nil
+}
+
+func (r *SalesRepository) selectCartsIter(
+	ctx context.Context,
+	tripID *models.TripID,
+	employeeID string,
+	cur *cartCursor,
+) Iter {
+	if cur == nil {
+		return r.session.Query(
+			getEmployeeCartsInTripQuery,
+			&tripID.RouteID, &tripID.Year, &tripID.StartTime, &employeeID,
+		).WithContext(ctx).Iter()
+	}
+	return r.session.Query(
+		getEmployeeCartsInTripAfterCursorQuery,
+		&tripID.RouteID, &tripID.Year, &tripID.StartTime, &employeeID,
+		&cur.LastOpTime,
+	).WithContext(ctx).Iter()
 }
 
 func createCartKey(employeeID string, operationTime time.Time) string {
