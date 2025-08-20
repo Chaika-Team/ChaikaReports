@@ -11,6 +11,7 @@ type SalesService interface {
 	InsertData(ctx context.Context, carriageReport *models.CarriageReport) error
 	GetTrip(ctx context.Context, tripID *models.TripID) (models.Trip, error)
 	GetEmployeeCartsInTrip(ctx context.Context, tripID *models.TripID, employeeID *string) ([]models.Cart, error)
+	GetEmployeeCartsInTripPaged(ctx context.Context, tripID *models.TripID, employeeID string, cartLimit int, cursor string) ([]models.Cart, string, error)
 	GetEmployeeIDsByTrip(ctx context.Context, tripID *models.TripID) ([]string, error)
 	GetEmployeeTrips(ctx context.Context, employeeID string, year string) ([]models.EmployeeTrip, error)
 	GetUnsyncedTrips(ctx context.Context) ([]models.TripID, error)
@@ -41,6 +42,11 @@ func (s *salesService) GetTrip(ctx context.Context, tripID *models.TripID) (mode
 // GetEmployeeCartsInTrip Gets all carts an employee made during trip
 func (s *salesService) GetEmployeeCartsInTrip(ctx context.Context, tripID *models.TripID, employeeID *string) ([]models.Cart, error) {
 	return s.repo.GetEmployeeCartsInTrip(ctx, tripID, employeeID)
+}
+
+// GetEmployeeCartsInTripPaged Gets paged carts an employee has sold during trip, returns array of Carts and a cursor for paging
+func (s *salesService) GetEmployeeCartsInTripPaged(ctx context.Context, tripID *models.TripID, employeeID string, cartLimit int, cursor string) ([]models.Cart, string, error) {
+	return s.repo.GetEmployeeCartsInTripPaged(ctx, tripID, employeeID, cartLimit, cursor)
 }
 
 // GetEmployeeIDsByTrip Gets all employee ID's in trip

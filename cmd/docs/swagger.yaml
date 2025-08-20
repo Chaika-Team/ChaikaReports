@@ -1,12 +1,12 @@
 basePath: /api/v1/report
 definitions:
-  schemas.Cart:
+  ChaikaReports_internal_handler_http_schemas.Cart:
     properties:
       cart_id:
-        $ref: '#/definitions/schemas.CartID'
+        $ref: '#/definitions/ChaikaReports_internal_handler_http_schemas.CartID'
       items:
         items:
-          $ref: '#/definitions/schemas.Item'
+          $ref: '#/definitions/ChaikaReports_internal_handler_http_schemas.Item'
         type: array
       operation_type:
         type: integer
@@ -15,7 +15,7 @@ definitions:
     - items
     - operation_type
     type: object
-  schemas.CartID:
+  ChaikaReports_internal_handler_http_schemas.CartID:
     properties:
       employee_id:
         type: string
@@ -25,85 +25,95 @@ definitions:
     - employee_id
     - operation_time
     type: object
-  schemas.DeleteItemFromCartRequest:
+  ChaikaReports_internal_handler_http_schemas.DeleteItemFromCartRequest:
     properties:
       cart_id:
-        $ref: '#/definitions/schemas.CartID'
+        $ref: '#/definitions/ChaikaReports_internal_handler_http_schemas.CartID'
       product_id:
         type: integer
       trip_id:
-        $ref: '#/definitions/schemas.TripID'
+        $ref: '#/definitions/ChaikaReports_internal_handler_http_schemas.TripID'
     required:
     - cart_id
     - product_id
     - trip_id
     type: object
-  schemas.DeleteItemFromCartResponse:
+  ChaikaReports_internal_handler_http_schemas.DeleteItemFromCartResponse:
     properties:
       message:
         type: string
     type: object
-  schemas.EmployeeTrip:
+  ChaikaReports_internal_handler_http_schemas.EmployeeTrip:
     properties:
       employee_id:
         type: string
       end_time:
         type: string
       trip_id:
-        $ref: '#/definitions/schemas.TripID'
+        $ref: '#/definitions/ChaikaReports_internal_handler_http_schemas.TripID'
     type: object
-  schemas.ErrorResponse:
+  ChaikaReports_internal_handler_http_schemas.ErrorResponse:
     properties:
       error:
         type: string
     type: object
-  schemas.GetEmployeeCartsInTripResponse:
+  ChaikaReports_internal_handler_http_schemas.GetEmployeeCartsInTripPagedResponse:
     properties:
       carts:
         items:
-          $ref: '#/definitions/schemas.Cart'
+          $ref: '#/definitions/ChaikaReports_internal_handler_http_schemas.Cart'
+        type: array
+      next_cursor:
+        description: '"" means no more carts'
+        type: string
+    type: object
+  ChaikaReports_internal_handler_http_schemas.GetEmployeeCartsInTripResponse:
+    properties:
+      carts:
+        items:
+          $ref: '#/definitions/ChaikaReports_internal_handler_http_schemas.Cart'
         type: array
     type: object
-  schemas.GetEmployeeIDsByTripResponse:
+  ChaikaReports_internal_handler_http_schemas.GetEmployeeIDsByTripResponse:
     properties:
       employee_ids:
         items:
           type: string
         type: array
     type: object
-  schemas.GetEmployeeTripsResponse:
+  ChaikaReports_internal_handler_http_schemas.GetEmployeeTripsResponse:
     properties:
       employee_trips:
         items:
-          $ref: '#/definitions/schemas.EmployeeTrip'
+          $ref: '#/definitions/ChaikaReports_internal_handler_http_schemas.EmployeeTrip'
         type: array
     required:
     - employee_trips
     type: object
-  schemas.InsertSalesRequest:
+  ChaikaReports_internal_handler_http_schemas.InsertSalesRequest:
     properties:
       carriage_id:
         type: integer
       carts:
         items:
-          $ref: '#/definitions/schemas.Cart'
+          $ref: '#/definitions/ChaikaReports_internal_handler_http_schemas.Cart'
         type: array
       end_time:
         type: string
       trip_id:
-        $ref: '#/definitions/schemas.TripID'
+        $ref: '#/definitions/ChaikaReports_internal_handler_http_schemas.TripID'
     required:
     - carriage_id
     - carts
     - end_time
     - trip_id
     type: object
-  schemas.InsertSalesResponse:
+  ChaikaReports_internal_handler_http_schemas.InsertSalesResponse:
     properties:
       message:
         type: string
     type: object
-  schemas.Item:
+  ChaikaReports_internal_handler_http_schemas.Item:
     properties:
       price:
         description: Storing price in kopeeks
@@ -118,7 +128,7 @@ definitions:
     - product_id
     - quantity
     type: object
-  schemas.TripID:
+  ChaikaReports_internal_handler_http_schemas.TripID:
     properties:
       route_id:
         type: string
@@ -131,23 +141,23 @@ definitions:
     - start_time
     - year
     type: object
-  schemas.UpdateItemQuantityRequest:
+  ChaikaReports_internal_handler_http_schemas.UpdateItemQuantityRequest:
     properties:
       cart_id:
-        $ref: '#/definitions/schemas.CartID'
+        $ref: '#/definitions/ChaikaReports_internal_handler_http_schemas.CartID'
       new_quantity:
         type: integer
       product_id:
         type: integer
       trip_id:
-        $ref: '#/definitions/schemas.TripID'
+        $ref: '#/definitions/ChaikaReports_internal_handler_http_schemas.TripID'
     required:
     - cart_id
     - new_quantity
     - product_id
     - trip_id
     type: object
-  schemas.UpdateItemQuantityResponse:
+  ChaikaReports_internal_handler_http_schemas.UpdateItemQuantityResponse:
     properties:
       message:
         type: string
@@ -164,7 +174,7 @@ info:
     url: https://opensource.org/licenses/MIT
   termsOfService: http://swagger.io/terms/
   title: ChaikaReports API
-  version: 1.0.7
+  version: 1.0.8
 paths:
   /sale:
     post:
@@ -177,22 +187,22 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/schemas.InsertSalesRequest'
+          $ref: '#/definitions/ChaikaReports_internal_handler_http_schemas.InsertSalesRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Data inserted successfully
           schema:
-            $ref: '#/definitions/schemas.InsertSalesResponse'
+            $ref: '#/definitions/ChaikaReports_internal_handler_http_schemas.InsertSalesResponse'
         "400":
           description: Bad request
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/ChaikaReports_internal_handler_http_schemas.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/ChaikaReports_internal_handler_http_schemas.ErrorResponse'
       summary: Insert Sales Data
       tags:
       - Sales
@@ -229,16 +239,68 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/schemas.GetEmployeeCartsInTripResponse'
+            $ref: '#/definitions/ChaikaReports_internal_handler_http_schemas.GetEmployeeCartsInTripResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/ChaikaReports_internal_handler_http_schemas.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/ChaikaReports_internal_handler_http_schemas.ErrorResponse'
       summary: Get Employee Carts in Trip
+      tags:
+      - Sales
+  /trip/cart/employee/paged:
+    get:
+      consumes:
+      - application/json
+      description: Returns complete carts, paginated by carts with an opaque cursor.
+      parameters:
+      - description: Route ID
+        in: query
+        name: route_id
+        required: true
+        type: string
+      - description: Year
+        in: query
+        name: year
+        required: true
+        type: string
+      - description: Trip Start Time (RFC3339)
+        in: query
+        name: start_time
+        required: true
+        type: string
+      - description: Employee ID
+        in: query
+        name: employee_id
+        required: true
+        type: string
+      - description: Number of complete carts to return (default 10)
+        in: query
+        name: limit
+        type: integer
+      - description: Opaque cursor from previous response; empty to start
+        in: query
+        name: cursor
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ChaikaReports_internal_handler_http_schemas.GetEmployeeCartsInTripPagedResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ChaikaReports_internal_handler_http_schemas.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ChaikaReports_internal_handler_http_schemas.ErrorResponse'
+      summary: Get Employee Carts in Trip (paged, cart-safe)
       tags:
       - Sales
   /trip/cart/item:
@@ -252,22 +314,22 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/schemas.DeleteItemFromCartRequest'
+          $ref: '#/definitions/ChaikaReports_internal_handler_http_schemas.DeleteItemFromCartRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/schemas.DeleteItemFromCartResponse'
+            $ref: '#/definitions/ChaikaReports_internal_handler_http_schemas.DeleteItemFromCartResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/ChaikaReports_internal_handler_http_schemas.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/ChaikaReports_internal_handler_http_schemas.ErrorResponse'
       summary: Delete Item from Cart
       tags:
       - Sales
@@ -282,22 +344,22 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/schemas.UpdateItemQuantityRequest'
+          $ref: '#/definitions/ChaikaReports_internal_handler_http_schemas.UpdateItemQuantityRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/schemas.UpdateItemQuantityResponse'
+            $ref: '#/definitions/ChaikaReports_internal_handler_http_schemas.UpdateItemQuantityResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/ChaikaReports_internal_handler_http_schemas.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/ChaikaReports_internal_handler_http_schemas.ErrorResponse'
       summary: Update Item Quantity
       tags:
       - Sales
@@ -328,15 +390,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/schemas.GetEmployeeIDsByTripResponse'
+            $ref: '#/definitions/ChaikaReports_internal_handler_http_schemas.GetEmployeeIDsByTripResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/ChaikaReports_internal_handler_http_schemas.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/ChaikaReports_internal_handler_http_schemas.ErrorResponse'
       summary: Get Employee IDs by Trip
       tags:
       - Sales
@@ -362,15 +424,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/schemas.GetEmployeeTripsResponse'
+            $ref: '#/definitions/ChaikaReports_internal_handler_http_schemas.GetEmployeeTripsResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/ChaikaReports_internal_handler_http_schemas.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/ChaikaReports_internal_handler_http_schemas.ErrorResponse'
       summary: Get Employee Trips
       tags:
       - Sales

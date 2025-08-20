@@ -12,12 +12,15 @@ type Query interface {
 	Exec() error
 	Iter() Iter
 	ScanCAS(dest ...interface{}) (bool, error)
+	PageSize(n int) Query
+	PageState(state []byte) Query
 }
 
 // Iter abstracts gocql.Iter used to iterate over query results
 type Iter interface {
 	Scan(dest ...interface{}) bool
 	Close() error
+	PageState() []byte
 }
 
 // Batch abstracts a batch of queries
@@ -57,6 +60,15 @@ func (qw *queryWrapper) ScanCAS(dest ...interface{}) (bool, error) {
 	return qw.q.ScanCAS(dest...)
 }
 
+func (qw *queryWrapper) PageSize(n int) Query {
+	qw.q = qw.q.PageSize(n)
+	return qw
+}
+func (qw *queryWrapper) PageState(state []byte) Query {
+	qw.q = qw.q.PageState(state)
+	return qw
+}
+
 // iterWrapper wraps a *gocql.Iter
 type iterWrapper struct {
 	iter *gocql.Iter
@@ -68,6 +80,10 @@ func (iw *iterWrapper) Scan(dest ...interface{}) bool {
 
 func (iw *iterWrapper) Close() error {
 	return iw.iter.Close()
+}
+
+func (iw *iterWrapper) PageState() []byte {
+	return iw.iter.PageState()
 }
 
 // batchWrapper wraps a *gocql.Batch to implement the Batch interface

@@ -59,6 +59,19 @@ type GetEmployeeCartsInTripResponse struct {
 	Carts []Cart `json:"carts"`
 }
 
+type GetEmployeeCartsInTripPagedRequest struct {
+	TripID     TripID `json:"trip_id" validate:"required"`
+	EmployeeID string `json:"employee_id" validate:"required"`
+	Limit      int    `json:"limit,omitempty"`
+	Cursor     string `json:"cursor,omitempty"`
+}
+
+// Paged variant: response
+type GetEmployeeCartsInTripPagedResponse struct {
+	Carts      []Cart `json:"carts"`
+	NextCursor string `json:"next_cursor"` // "" means no more carts
+}
+
 type GetEmployeeIDsByTripRequest struct {
 	TripID TripID `json:"trip_id" validate:"required"`
 }

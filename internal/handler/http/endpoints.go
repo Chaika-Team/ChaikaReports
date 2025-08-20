@@ -101,6 +101,58 @@ func MakeGetEmployeeCartsInTripEndpoint(svc service.SalesService) endpoint.Endpo
 	}
 }
 
+// MakeGetEmployeeCartsInTripPagedEndpoint handles paginated (cart-safe) retrieval
+//
+// @Summary      Get Employee Carts in Trip (paged, cart-safe)
+// @Description  Returns complete carts, paginated by carts with an opaque cursor.
+// @Tags         Sales
+// @Accept       json
+// @Produce      json
+// @Param        route_id     query     string  true  "Route ID"
+// @Param        year         query     string  true  "Year"
+// @Param        start_time   query     string  true  "Trip Start Time (RFC3339)"
+// @Param        employee_id  query     string  true  "Employee ID"
+// @Param        limit        query     int     false "Number of complete carts to return (default 10)"
+// @Param        cursor       query     string  false "Opaque cursor from previous response; empty to start"
+// @Success      200          {object}  schemas.GetEmployeeCartsInTripPagedResponse
+// @Failure      400          {object}  schemas.ErrorResponse
+// @Failure      500          {object}  schemas.ErrorResponse
+// @Router       /trip/cart/employee/paged [get]
+func MakeGetEmployeeCartsInTripPagedEndpoint(svc service.SalesService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req, ok := request.(schemas.GetEmployeeCartsInTripPagedRequest)
+		if !ok {
+			return nil, errors.New(invalidRequestTypeErrorMessage)
+		}
+
+		startTime, err := time.Parse(time.RFC3339, req.TripID.StartTime)
+		if err != nil {
+			return nil, errors.New(invalidStartTimeErrorMessage)
+		}
+
+		tripID := models.TripID{
+			RouteID:   req.TripID.RouteID,
+			Year:      req.TripID.Year,
+			StartTime: startTime,
+		}
+
+		carts, nextCursor, err := svc.GetEmployeeCartsInTripPaged(ctx, &tripID, req.EmployeeID, req.Limit, req.Cursor)
+		if err != nil {
+			return nil, err
+		}
+
+		var schemaCarts []schemas.Cart
+		for _, c := range carts {
+			schemaCarts = append(schemaCarts, mapDomainCartToSchemaCart(c))
+		}
+
+		return schemas.GetEmployeeCartsInTripPagedResponse{
+			Carts:      schemaCarts,
+			NextCursor: nextCursor,
+		}, nil
+	}
+}
+
 // MakeGetEmployeeIDsByTripEndpoint handles getting employee IDs by trip
 //
 // @Summary      Get Employee IDs by Trip
