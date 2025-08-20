@@ -333,6 +333,13 @@ func (fq *FakeQuery) ScanCAS(dest ...interface{}) (bool, error) {
 	return args.Bool(0), args.Error(1)
 }
 
+func (fq *FakeQuery) PageSize(n int) Query {
+	return fq
+}
+func (fq *FakeQuery) PageState(state []byte) Query {
+	return fq
+}
+
 // FakeIter implements cassandra.Iter.
 type FakeIter struct {
 	mock.Mock
@@ -346,6 +353,10 @@ func (fi *FakeIter) Scan(dest ...interface{}) bool {
 func (fi *FakeIter) Close() error {
 	args := fi.Called()
 	return args.Error(0)
+}
+
+func (fi *FakeIter) PageState() []byte {
+	return nil
 }
 
 // FakeBatch implements cassandra.Batch.
@@ -590,6 +601,191 @@ func TestGetEmployeeCartsInTrip_PostAggregateCloseError(t *testing.T) {
 
 	mockSession.AssertExpectations(t)
 	fakeQuery.AssertExpectations(t)
+}
+
+func (s *SimpleFakeIter) PageState() []byte               { return nil }
+func (s *simpleFakeIterString) PageState() []byte         { return nil }
+func (s *simpleFakeIterTrip) PageState() []byte           { return nil }
+func (f *fakeIterWithError) PageState() []byte            { return nil }
+func (f *fakeIterStringWithCloseError) PageState() []byte { return nil }
+func (f *fakeIterTripWithCloseError) PageState() []byte   { return nil }
+func (f *fakeTripIter) PageState() []byte                 { return nil }
+func (f *fakeUnsyncIter) PageState() []byte               { return nil }
+
+func TestGetEmployeeCartsInTripPaged_FirstPage_WithLimit_ReturnsTwoCarts_AndCursor(t *testing.T) {
+	mockSession := new(MockSession)
+	repo := NewSalesRepository(mockSession, log.NewNopLogger())
+
+	// Times
+	start := time.Date(2025, 8, 20, 8, 0, 0, 0, time.UTC)
+	op1 := time.Date(2025, 8, 20, 10, 0, 0, 0, time.UTC) // cart A
+	op2 := time.Date(2025, 8, 20, 9, 0, 0, 0, time.UTC)  // cart B
+	op3 := time.Date(2025, 8, 20, 8, 30, 0, 0, time.UTC) // cart C
+
+	// First page query iterator (no cursor): rows for 3 carts (we will limit by carts=2)
+	iter1 := &SimpleFakeIter{
+		rows: []fakeRow{
+			// Cart A (2 items)
+			{operationTime: op1, operationType: 1, productID: 1, quantity: 2, price: 100},
+			{operationTime: op1, operationType: 1, productID: 2, quantity: 1, price: 200},
+
+			// Cart B (1 item)
+			{operationTime: op2, operationType: 1, productID: 3, quantity: 1, price: 300},
+
+			// Cart C (1 item) – should not be emitted because cartLimit=2
+			{operationTime: op3, operationType: 1, productID: 4, quantity: 1, price: 400},
+		},
+	}
+
+	q1 := new(FakeQuery)
+	q1.On("WithContext", mock.Anything).Return(q1)
+	q1.On("Iter").Return(iter1)
+
+	// Expect base query to be used (no cursor)
+	mockSession.On("Query", getEmployeeCartsInTripQuery, mock.Anything).Return(q1)
+
+	tripID := &models.TripID{RouteID: "routeX", Year: "2025", StartTime: start}
+	emp := "emp1"
+
+	carts, next, err := repo.GetEmployeeCartsInTripPaged(context.Background(), tripID, emp, 2, "")
+	assert.NoError(t, err)
+
+	// Should return 2 complete carts (op1 and op2)
+	require := assert.New(t)
+	require.Equal(2, len(carts))
+
+	// First emitted cart is op1 (order doesn’t strictly matter for the test logic, but check contents)
+	var foundOp1, foundOp2 bool
+	for _, c := range carts {
+		if c.CartID.OperationTime.Equal(op1) {
+			foundOp1 = true
+			assert.Equal(t, "emp1", c.CartID.EmployeeID)
+			assert.Equal(t, int8(1), c.OperationType)
+			assert.Len(t, c.Items, 2)
+			assert.Equal(t, 1, c.Items[0].ProductID)
+			assert.Equal(t, 2, int(c.Items[0].Quantity))
+			assert.Equal(t, int64(100), c.Items[0].Price)
+			assert.Equal(t, 2, c.Items[1].ProductID)
+		}
+		if c.CartID.OperationTime.Equal(op2) {
+			foundOp2 = true
+			assert.Len(t, c.Items, 1)
+			assert.Equal(t, 3, c.Items[0].ProductID)
+		}
+	}
+	require.True(foundOp1)
+	require.True(foundOp2)
+
+	// We should get a non-empty cursor based on last emitted cart (op2)
+	assert.NotEmpty(t, next)
+
+	mockSession.AssertExpectations(t)
+	q1.AssertExpectations(t)
+}
+
+func TestGetEmployeeCartsInTripPaged_NextPage_WithCursor_ReturnsRemaining_NoCursor(t *testing.T) {
+	mockSession := new(MockSession)
+	repo := NewSalesRepository(mockSession, log.NewNopLogger())
+
+	start := time.Date(2025, 8, 20, 8, 0, 0, 0, time.UTC)
+	emp := "emp1"
+
+	// We need a first call to produce a cursor so we can reuse it here.
+	// But since cursor format is opaque base64, we can just call the repo once quickly
+	// to get a real cursor and then stub the "after" query.
+	// (Alternatively, if you know your encodeCursor format you can hardcode a value.)
+
+	// --- First call to get a cursor (limit=1, with two carts) ---
+	op1 := time.Date(2025, 8, 20, 10, 0, 0, 0, time.UTC)
+	op2 := time.Date(2025, 8, 20, 9, 0, 0, 0, time.UTC)
+
+	iter1 := &SimpleFakeIter{
+		rows: []fakeRow{
+			{operationTime: op1, operationType: 1, productID: 1, quantity: 1, price: 100},
+			{operationTime: op2, operationType: 1, productID: 2, quantity: 1, price: 200},
+		},
+	}
+	q1 := new(FakeQuery)
+	q1.On("WithContext", mock.Anything).Return(q1)
+	q1.On("Iter").Return(iter1)
+	mockSession.On("Query", getEmployeeCartsInTripQuery, mock.Anything).Return(q1)
+
+	tripID := &models.TripID{RouteID: "routeX", Year: "2025", StartTime: start}
+
+	firstPage, cursor, err := repo.GetEmployeeCartsInTripPaged(context.Background(), tripID, emp, 1, "")
+	assert.NoError(t, err)
+	assert.Len(t, firstPage, 1)
+	assert.NotEmpty(t, cursor)
+	mockSession.AssertExpectations(t)
+	q1.AssertExpectations(t)
+
+	// --- Second call: use the returned cursor (should return the remaining cart and empty cursor) ---
+	iter2 := &SimpleFakeIter{
+		rows: []fakeRow{
+			{operationTime: op2, operationType: 1, productID: 2, quantity: 1, price: 200},
+		},
+	}
+	q2 := new(FakeQuery)
+	q2.On("WithContext", mock.Anything).Return(q2)
+	q2.On("Iter").Return(iter2)
+	mockSession.ExpectedCalls = nil // reset expectations for second call
+	mockSession.On("Query", getEmployeeCartsInTripAfterCursorQuery, mock.Anything).Return(q2)
+
+	secondPage, next, err := repo.GetEmployeeCartsInTripPaged(context.Background(), tripID, emp, 2, cursor)
+	assert.NoError(t, err)
+	assert.Len(t, secondPage, 1)
+	assert.Empty(t, next)
+
+	mockSession.AssertExpectations(t)
+	q2.AssertExpectations(t)
+}
+
+func TestGetEmployeeCartsInTripPaged_InvalidCursor_ReturnsError(t *testing.T) {
+	mockSession := new(MockSession)
+	repo := NewSalesRepository(mockSession, log.NewNopLogger())
+
+	start := time.Date(2025, 8, 20, 8, 0, 0, 0, time.UTC)
+	tripID := &models.TripID{RouteID: "routeX", Year: "2025", StartTime: start}
+
+	// Pass junk base64 to trigger decode error
+	_, _, err := repo.GetEmployeeCartsInTripPaged(context.Background(), tripID, "emp1", 2, "!!!not-base64!!!")
+	assert.Error(t, err)
+	assert.EqualError(t, err, "invalid cursor")
+
+	// No expectations on session because we shouldn't even hit the DB
+	mockSession.AssertExpectations(t)
+}
+
+func TestGetEmployeeCartsInTripPaged_NoLimit_ReturnsAll_NoCursor(t *testing.T) {
+	mockSession := new(MockSession)
+	repo := NewSalesRepository(mockSession, log.NewNopLogger())
+
+	start := time.Date(2025, 8, 20, 8, 0, 0, 0, time.UTC)
+	op1 := time.Date(2025, 8, 20, 10, 0, 0, 0, time.UTC)
+	op2 := time.Date(2025, 8, 20, 9, 0, 0, 0, time.UTC)
+
+	// cartLimit <= 0 means "no cutoff" in the repo implementation
+	iter := &SimpleFakeIter{
+		rows: []fakeRow{
+			{operationTime: op1, operationType: 1, productID: 1, quantity: 1, price: 100},
+			{operationTime: op1, operationType: 1, productID: 2, quantity: 1, price: 200},
+			{operationTime: op2, operationType: 1, productID: 3, quantity: 1, price: 300},
+		},
+	}
+	q := new(FakeQuery)
+	q.On("WithContext", mock.Anything).Return(q)
+	q.On("Iter").Return(iter)
+	mockSession.On("Query", getEmployeeCartsInTripQuery, mock.Anything).Return(q)
+
+	tripID := &models.TripID{RouteID: "routeX", Year: "2025", StartTime: start}
+
+	carts, next, err := repo.GetEmployeeCartsInTripPaged(context.Background(), tripID, "emp1", 0, "")
+	assert.NoError(t, err)
+	assert.Len(t, carts, 2) // two carts (op1, op2)
+	assert.Empty(t, next)
+
+	mockSession.AssertExpectations(t)
+	q.AssertExpectations(t)
 }
 
 func TestGetEmployeeIDsByTrip(t *testing.T) {
