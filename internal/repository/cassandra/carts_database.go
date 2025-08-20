@@ -287,107 +287,30 @@ func (r *SalesRepository) GetEmployeeCartsInTripPaged(
 	cursorB64 string,
 ) ([]models.Cart, string, error) {
 
-	// Decode cursor (only error if non-empty garbage)
 	cur, err := decodeCursor(cursorB64)
 	if err != nil {
 		_ = r.log.Log("error", fmt.Sprintf("invalid cursor: %v", err))
 		return nil, "", fmt.Errorf("invalid cursor")
 	}
 
-	// Choose iterator
 	iter := r.selectCartsIter(ctx, tripID, employeeID, cur)
+	defer func() {
+		// If we returned early inside pager (on limit), iter.Close was called there.
+		// If we complete the scan, this Close here will run.
+	}()
 
-	// Unlimited mode if no positive limit provided
-	unlimited := cartLimit <= 0
+	p := newCartPager(iter, r.log, employeeID, cartLimit)
 
-	// Preallocate reasonably only when limited
-	var carts []models.Cart
-	if !unlimited {
-		// cap at a small bound to avoid oversized preallocs in tests/CI
-		capHint := cartLimit
-		if capHint > 1024 {
-			capHint = 1024
-		}
-		carts = make([]models.Cart, 0, capHint)
-	} else {
-		carts = make([]models.Cart, 0)
-	}
-
-	// Row vars
-	var (
-		opTime time.Time
-		opType int8
-		pid    int
-		qty    int16
-		price  int64
-	)
-
-	// Current cart under construction
-	var (
-		curOpTime time.Time
-		curCart   *models.Cart
-		haveCart  bool
-	)
-
-	startCart := func(op time.Time, t int8) {
-		curOpTime = op
-		curCart = &models.Cart{
-			CartID: models.CartID{
-				EmployeeID:    employeeID,
-				OperationTime: op,
-			},
-			OperationType: t,
-			Items:         []models.Item{},
-		}
-		haveCart = true
-	}
-
-	emitAndMaybeReturn := func() (stop bool, next string, retErr error) {
-		carts = append(carts, *curCart)
-		if unlimited || len(carts) < cartLimit {
-			return false, "", nil
-		}
-		// limit reached -> build cursor from the LAST emitted cart's op time
-		nextCur := cartCursor{LastOpTime: curOpTime}
-		if err := iter.Close(); err != nil {
-			_ = r.log.Log("error", fmt.Sprintf("iter.Close failed: %v", err))
-			return true, "", err
-		}
-		return true, encodeCursor(nextCur), nil
-	}
-
-	for iter.Scan(&opTime, &opType, &pid, &qty, &price) {
-		if !haveCart {
-			startCart(opTime, opType)
-		} else if !opTime.Equal(curOpTime) {
-			// Cart boundary
-			stop, next, retErr := emitAndMaybeReturn()
-			if stop || retErr != nil {
-				return carts, next, retErr
-			}
-			startCart(opTime, opType)
-		}
-
-		// Append item to current cart
-		curCart.Items = append(curCart.Items, models.Item{
-			ProductID: pid,
-			Quantity:  qty,
-			Price:     price,
-		})
-	}
-
-	// Emit trailing cart (if any)
-	if haveCart {
-		carts = append(carts, *curCart)
+	next, earlyErr := p.scanAll()
+	if earlyErr != nil {
+		return nil, "", earlyErr
 	}
 
 	if err := iter.Close(); err != nil {
 		_ = r.log.Log("error", fmt.Sprintf("iter.Close failed: %v", err))
 		return nil, "", err
 	}
-
-	// No more pages if we didn’t hit the limit
-	return carts, "", nil
+	return p.carts, next, nil
 }
 
 // GetEmployeeIDsByTrip Gets all employees by TripID (RouteID, StartTime)
@@ -590,6 +513,123 @@ func (r *SalesRepository) selectCartsIter(
 		&tripID.RouteID, &tripID.Year, &tripID.StartTime, &employeeID,
 		&cur.LastOpTime,
 	).WithContext(ctx).Iter()
+}
+
+type cartPager struct {
+	iter       Iter
+	logger     log.Logger
+	employeeID string
+
+	limit     int
+	unlimited bool
+
+	// output
+	carts []models.Cart
+
+	// current cart under construction
+	curOpTime time.Time
+	curCart   *models.Cart
+	haveCart  bool
+
+	// scan row vars
+	opTime time.Time
+	opType int8
+	pid    int
+	qty    int16
+	price  int64
+}
+
+func newCartPager(iter Iter, logger log.Logger, employeeID string, cartLimit int) *cartPager {
+	p := &cartPager{
+		iter:       iter,
+		logger:     logger,
+		employeeID: employeeID,
+		limit:      cartLimit,
+		unlimited:  cartLimit <= 0,
+	}
+	if !p.unlimited {
+		capHint := cartLimit
+		if capHint > 1024 {
+			capHint = 1024
+		}
+		p.carts = make([]models.Cart, 0, capHint)
+	} else {
+		p.carts = make([]models.Cart, 0)
+	}
+	return p
+}
+
+func (p *cartPager) startCart(op time.Time, t int8) {
+	p.curOpTime = op
+	p.curCart = &models.Cart{
+		CartID: models.CartID{
+			EmployeeID:    p.employeeID,
+			OperationTime: op,
+		},
+		OperationType: t,
+		Items:         []models.Item{},
+	}
+	p.haveCart = true
+}
+
+func (p *cartPager) appendItem(pid int, qty int16, price int64) {
+	p.curCart.Items = append(p.curCart.Items, models.Item{
+		ProductID: pid,
+		Quantity:  qty,
+		Price:     price,
+	})
+}
+
+func (p *cartPager) emitAndMaybeReturn() (stop bool, next string, retErr error) {
+	p.carts = append(p.carts, *p.curCart)
+	if p.unlimited || len(p.carts) < p.limit {
+		return false, "", nil
+	}
+	nextCur := cartCursor{LastOpTime: p.curOpTime}
+	if err := p.iter.Close(); err != nil {
+		_ = p.logger.Log("error", fmt.Sprintf("iter.Close failed: %v", err))
+		return true, "", err
+	}
+	return true, encodeCursor(nextCur), nil
+}
+
+func (p *cartPager) handleBoundary() (stop bool, next string, err error) {
+	stop, next, err = p.emitAndMaybeReturn()
+	if stop || err != nil {
+		return stop, next, err
+	}
+	p.startCart(p.opTime, p.opType)
+	return false, "", nil
+}
+
+func (p *cartPager) scanLoop() (stop bool, next string, err error) {
+	for p.iter.Scan(&p.opTime, &p.opType, &p.pid, &p.qty, &p.price) {
+		if !p.haveCart {
+			p.startCart(p.opTime, p.opType)
+		} else if !p.opTime.Equal(p.curOpTime) {
+			stop, next, err = p.handleBoundary()
+			if stop || err != nil {
+				return stop, next, err
+			}
+		}
+		p.appendItem(p.pid, p.qty, p.price)
+	}
+	return false, "", nil
+}
+
+func (p *cartPager) finalize() {
+	if p.haveCart {
+		p.carts = append(p.carts, *p.curCart)
+	}
+}
+
+func (p *cartPager) scanAll() (next string, err error) {
+	stop, next, err := p.scanLoop()
+	if stop || err != nil {
+		return next, err
+	}
+	p.finalize()
+	return "", nil
 }
 
 func createCartKey(employeeID string, operationTime time.Time) string {
