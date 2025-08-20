@@ -13,6 +13,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 	"time"
 
@@ -56,6 +57,28 @@ func (m *MockSalesRepository) GetEmployeeCartsInTrip(ctx context.Context, tripID
 		return args.Get(0).([]models.Cart), args.Error(1)
 	}
 	return nil, args.Error(1)
+}
+
+func (m *MockSalesRepository) GetEmployeeCartsInTripPaged(
+	ctx context.Context,
+	tripID *models.TripID,
+	employeeID string,
+	cartLimit int,
+	cursorB64 string,
+) ([]models.Cart, string, error) {
+	args := m.Called(ctx, tripID, employeeID, cartLimit, cursorB64)
+
+	var carts []models.Cart
+	if v := args.Get(0); v != nil {
+		carts = v.([]models.Cart)
+	}
+
+	var next string
+	if v := args.Get(1); v != nil {
+		next = v.(string)
+	}
+
+	return carts, next, args.Error(2)
 }
 
 func (m *MockSalesRepository) GetEmployeeIDsByTrip(ctx context.Context, tripID *models.TripID) ([]string, error) {
@@ -420,6 +443,247 @@ func TestGetEmployeeCartsInTripEndpoint_InvalidRequestType(t *testing.T) {
 
 	// Since the type assertion fails, the service method should never be called.
 	mockRepo.AssertNotCalled(t, "GetEmployeeCartsInTrip", mock.Anything, mock.Anything, mock.Anything)
+}
+
+func TestGetEmployeeCartsInTripPagedEndpoint(t *testing.T) {
+	makeCart := func(emp string, op time.Time, opType int8, items ...models.Item) models.Cart {
+		return models.Cart{
+			CartID: models.CartID{
+				EmployeeID:    emp,
+				OperationTime: op,
+			},
+			OperationType: opType,
+			Items:         items,
+		}
+	}
+
+	firstOp := time.Date(2025, 8, 20, 10, 0, 0, 0, time.UTC)
+	secondOp := time.Date(2025, 8, 20, 9, 0, 0, 0, time.UTC)
+
+	tests := []struct {
+		name           string
+		queryParams    map[string]string
+		mockSetup      func(m *MockSalesRepository)
+		expectedStatus int
+		expectedBody   interface{}
+	}{
+		{
+			name: "First page success (limit=2, empty cursor)",
+			queryParams: map[string]string{
+				"route_id":    "route_test",
+				"year":        "2025",
+				"start_time":  "2025-08-20T08:00:00Z",
+				"employee_id": "emp1",
+				"limit":       "2",
+			},
+			mockSetup: func(m *MockSalesRepository) {
+				c1 := makeCart("emp1", firstOp, 1,
+					models.Item{ProductID: 1, Quantity: 2, Price: 100},
+					models.Item{ProductID: 2, Quantity: 1, Price: 200},
+				)
+				c2 := makeCart("emp1", secondOp, 1,
+					models.Item{ProductID: 3, Quantity: 1, Price: 300},
+				)
+
+				m.On("GetEmployeeCartsInTripPaged",
+					mock.Anything,
+					mock.AnythingOfType("*models.TripID"),
+					"emp1",
+					2,
+					"",
+				).Return([]models.Cart{c1, c2}, "CURSOR_NEXT", nil)
+			},
+			expectedStatus: http.StatusOK,
+			expectedBody: schemas.GetEmployeeCartsInTripPagedResponse{
+				Carts: []schemas.Cart{
+					{
+						CartID: schemas.CartID{
+							EmployeeID:    "emp1",
+							OperationTime: firstOp.Format(time.RFC3339),
+						},
+						OperationType: 1,
+						Items: []schemas.Item{
+							{ProductID: 1, Quantity: 2, Price: 100},
+							{ProductID: 2, Quantity: 1, Price: 200},
+						},
+					},
+					{
+						CartID: schemas.CartID{
+							EmployeeID:    "emp1",
+							OperationTime: secondOp.Format(time.RFC3339),
+						},
+						OperationType: 1,
+						Items: []schemas.Item{
+							{ProductID: 3, Quantity: 1, Price: 300},
+						},
+					},
+				},
+				NextCursor: "CURSOR_NEXT",
+			},
+		},
+		{
+			name: "Next page success (limit=2, with cursor)",
+			queryParams: map[string]string{
+				"route_id":    "route_test",
+				"year":        "2025",
+				"start_time":  "2025-08-20T08:00:00Z",
+				"employee_id": "emp1",
+				"limit":       "2",
+				"cursor":      "CURSOR_NEXT",
+			},
+			mockSetup: func(m *MockSalesRepository) {
+				// Return the last page (single cart) and empty cursor
+				c3 := makeCart("emp1",
+					time.Date(2025, 8, 20, 8, 30, 0, 0, time.UTC), 1,
+					models.Item{ProductID: 4, Quantity: 2, Price: 400},
+				)
+				m.On("GetEmployeeCartsInTripPaged",
+					mock.Anything,
+					mock.AnythingOfType("*models.TripID"),
+					"emp1",
+					2,
+					"CURSOR_NEXT",
+				).Return([]models.Cart{c3}, "", nil)
+			},
+			expectedStatus: http.StatusOK,
+			expectedBody: schemas.GetEmployeeCartsInTripPagedResponse{
+				Carts: []schemas.Cart{
+					{
+						CartID: schemas.CartID{
+							EmployeeID:    "emp1",
+							OperationTime: "2025-08-20T08:30:00Z",
+						},
+						OperationType: 1,
+						Items: []schemas.Item{
+							{ProductID: 4, Quantity: 2, Price: 400},
+						},
+					},
+				},
+				NextCursor: "",
+			},
+		},
+		{
+			name: "Missing required params",
+			queryParams: map[string]string{
+				"route_id":   "route_test",
+				"year":       "2025",
+				"start_time": "2025-08-20T08:00:00Z",
+				// employee_id missing
+				"limit": "2",
+			},
+			mockSetup:      func(m *MockSalesRepository) {},
+			expectedStatus: http.StatusBadRequest,
+			expectedBody: schemas.ErrorResponse{
+				Error: "missing one or more required query parameters: route_id, year, start_time, employee_id",
+			},
+		},
+		{
+			name: "Invalid limit",
+			queryParams: map[string]string{
+				"route_id":    "route_test",
+				"year":        "2025",
+				"start_time":  "2025-08-20T08:00:00Z",
+				"employee_id": "emp1",
+				"limit":       "abc",
+			},
+			mockSetup:      func(m *MockSalesRepository) {},
+			expectedStatus: http.StatusBadRequest,
+			expectedBody: schemas.ErrorResponse{
+				Error: "invalid limit (must be a positive integer)",
+			},
+		},
+		{
+			name: "Invalid start_time format",
+			queryParams: map[string]string{
+				"route_id":    "route_test",
+				"year":        "2025",
+				"start_time":  "not-a-time",
+				"employee_id": "emp1",
+				"limit":       "2",
+			},
+			mockSetup:      func(m *MockSalesRepository) {},
+			expectedStatus: http.StatusBadRequest,
+			expectedBody: schemas.ErrorResponse{
+				Error: "invalid start_time format; must be RFC3339",
+			},
+		},
+		{
+			name: "Repository error",
+			queryParams: map[string]string{
+				"route_id":    "route_test",
+				"year":        "2025",
+				"start_time":  "2025-08-20T08:00:00Z",
+				"employee_id": "emp1",
+				"limit":       "2",
+			},
+			mockSetup: func(m *MockSalesRepository) {
+				m.On("GetEmployeeCartsInTripPaged",
+					mock.Anything,
+					mock.AnythingOfType("*models.TripID"),
+					"emp1",
+					2,
+					"",
+				).Return(nil, "", errors.New("database error"))
+			},
+			expectedStatus: http.StatusBadRequest,
+			expectedBody: schemas.ErrorResponse{
+				Error: "database error",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockRepo := &MockSalesRepository{}
+			tt.mockSetup(mockRepo)
+
+			svc := service.NewSalesService(mockRepo)
+			handler := httphandler.NewHTTPHandler(svc, log.NewNopLogger())
+
+			req, err := http.NewRequest("GET", "/api/v1/report/trip/cart/employee/paged", nil)
+			assert.NoError(t, err)
+
+			q := req.URL.Query()
+			for k, v := range tt.queryParams {
+				q.Set(k, v)
+			}
+			req.URL.RawQuery = q.Encode()
+
+			rr := httptest.NewRecorder()
+			handler.ServeHTTP(rr, req)
+
+			assert.Equal(t, tt.expectedStatus, rr.Code)
+
+			body, err := io.ReadAll(rr.Body)
+			assert.NoError(t, err)
+
+			expectedJSON, _ := json.Marshal(tt.expectedBody)
+			assert.JSONEq(t, string(expectedJSON), string(body))
+
+			// Verify repository call only when params valid and start_time parses
+			routeID, hasRoute := tt.queryParams["route_id"]
+			year, hasYear := tt.queryParams["year"]
+			startStr, hasStart := tt.queryParams["start_time"]
+			emp, hasEmp := tt.queryParams["employee_id"]
+			limitStr := tt.queryParams["limit"]
+
+			_, startErr := time.Parse(time.RFC3339, startStr)
+			limitOK := false
+			if limitStr != "" {
+				if n, e := strconv.Atoi(limitStr); e == nil && n > 0 {
+					limitOK = true
+				}
+			}
+
+			if hasRoute && routeID != "" && hasYear && year != "" && hasStart && startErr == nil && hasEmp && emp != "" && limitOK {
+				mockRepo.AssertCalled(t, "GetEmployeeCartsInTripPaged",
+					mock.Anything, mock.AnythingOfType("*models.TripID"), emp, mock.AnythingOfType("int"), mock.AnythingOfType("string"))
+			} else {
+				mockRepo.AssertNotCalled(t, "GetEmployeeCartsInTripPaged",
+					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+			}
+		})
+	}
 }
 
 func TestGetEmployeeIDsByTripEndpoint(t *testing.T) {
