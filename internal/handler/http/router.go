@@ -63,6 +63,13 @@ func registerV1Routes(logger log.Logger, router *mux.Router, svc service.SalesSe
 		kitHttp.ServerErrorEncoder(encoder.EncodeError(logger)),
 	))
 
+	v1.Methods("GET").Path("/trip/cart/employee/paged").Handler(kitHttp.NewServer(
+		MakeGetEmployeeCartsInTripPagedEndpoint(svc),
+		decoder.DecodeGetEmployeeCartsInTripPagedRequest,
+		encoder.EncodeResponse,
+		kitHttp.ServerErrorEncoder(encoder.EncodeError(logger)),
+	))
+
 	v1.Methods("GET").Path("/trip/employee_id").Handler(kitHttp.NewServer(
 		MakeGetEmployeeIDsByTripEndpoint(svc),
 		decoder.DecodeGetEmployeeIDsByTripRequest,

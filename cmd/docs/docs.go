@@ -44,7 +44,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/schemas.InsertSalesRequest"
+                            "$ref": "#/definitions/ChaikaReports_internal_handler_http_schemas.InsertSalesRequest"
                         }
                     }
                 ],
@@ -52,19 +52,19 @@ const docTemplate = `{
                     "200": {
                         "description": "Data inserted successfully",
                         "schema": {
-                            "$ref": "#/definitions/schemas.InsertSalesResponse"
+                            "$ref": "#/definitions/ChaikaReports_internal_handler_http_schemas.InsertSalesResponse"
                         }
                     },
                     "400": {
                         "description": "Bad request",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/ChaikaReports_internal_handler_http_schemas.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/ChaikaReports_internal_handler_http_schemas.ErrorResponse"
                         }
                     }
                 }
@@ -117,19 +117,96 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/schemas.GetEmployeeCartsInTripResponse"
+                            "$ref": "#/definitions/ChaikaReports_internal_handler_http_schemas.GetEmployeeCartsInTripResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/ChaikaReports_internal_handler_http_schemas.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/ChaikaReports_internal_handler_http_schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/trip/cart/employee/paged": {
+            "get": {
+                "description": "Returns complete carts, paginated by carts with an opaque cursor.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sales"
+                ],
+                "summary": "Get Employee Carts in Trip (paged, cart-safe)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Route ID",
+                        "name": "route_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Year",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Trip Start Time (RFC3339)",
+                        "name": "start_time",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Employee ID",
+                        "name": "employee_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of complete carts to return (default 10)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Opaque cursor from previous response; empty to start",
+                        "name": "cursor",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ChaikaReports_internal_handler_http_schemas.GetEmployeeCartsInTripPagedResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ChaikaReports_internal_handler_http_schemas.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/ChaikaReports_internal_handler_http_schemas.ErrorResponse"
                         }
                     }
                 }
@@ -155,7 +232,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/schemas.DeleteItemFromCartRequest"
+                            "$ref": "#/definitions/ChaikaReports_internal_handler_http_schemas.DeleteItemFromCartRequest"
                         }
                     }
                 ],
@@ -163,19 +240,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/schemas.DeleteItemFromCartResponse"
+                            "$ref": "#/definitions/ChaikaReports_internal_handler_http_schemas.DeleteItemFromCartResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/ChaikaReports_internal_handler_http_schemas.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/ChaikaReports_internal_handler_http_schemas.ErrorResponse"
                         }
                     }
                 }
@@ -201,7 +278,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/schemas.UpdateItemQuantityRequest"
+                            "$ref": "#/definitions/ChaikaReports_internal_handler_http_schemas.UpdateItemQuantityRequest"
                         }
                     }
                 ],
@@ -209,19 +286,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/schemas.UpdateItemQuantityResponse"
+                            "$ref": "#/definitions/ChaikaReports_internal_handler_http_schemas.UpdateItemQuantityResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/ChaikaReports_internal_handler_http_schemas.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/ChaikaReports_internal_handler_http_schemas.ErrorResponse"
                         }
                     }
                 }
@@ -267,19 +344,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/schemas.GetEmployeeIDsByTripResponse"
+                            "$ref": "#/definitions/ChaikaReports_internal_handler_http_schemas.GetEmployeeIDsByTripResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/ChaikaReports_internal_handler_http_schemas.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/ChaikaReports_internal_handler_http_schemas.ErrorResponse"
                         }
                     }
                 }
@@ -318,19 +395,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/schemas.GetEmployeeTripsResponse"
+                            "$ref": "#/definitions/ChaikaReports_internal_handler_http_schemas.GetEmployeeTripsResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/ChaikaReports_internal_handler_http_schemas.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/ChaikaReports_internal_handler_http_schemas.ErrorResponse"
                         }
                     }
                 }
@@ -338,7 +415,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "schemas.Cart": {
+        "ChaikaReports_internal_handler_http_schemas.Cart": {
             "type": "object",
             "required": [
                 "cart_id",
@@ -347,12 +424,12 @@ const docTemplate = `{
             ],
             "properties": {
                 "cart_id": {
-                    "$ref": "#/definitions/schemas.CartID"
+                    "$ref": "#/definitions/ChaikaReports_internal_handler_http_schemas.CartID"
                 },
                 "items": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/schemas.Item"
+                        "$ref": "#/definitions/ChaikaReports_internal_handler_http_schemas.Item"
                     }
                 },
                 "operation_type": {
@@ -360,7 +437,7 @@ const docTemplate = `{
                 }
             }
         },
-        "schemas.CartID": {
+        "ChaikaReports_internal_handler_http_schemas.CartID": {
             "type": "object",
             "required": [
                 "employee_id",
@@ -375,7 +452,7 @@ const docTemplate = `{
                 }
             }
         },
-        "schemas.DeleteItemFromCartRequest": {
+        "ChaikaReports_internal_handler_http_schemas.DeleteItemFromCartRequest": {
             "type": "object",
             "required": [
                 "cart_id",
@@ -384,17 +461,17 @@ const docTemplate = `{
             ],
             "properties": {
                 "cart_id": {
-                    "$ref": "#/definitions/schemas.CartID"
+                    "$ref": "#/definitions/ChaikaReports_internal_handler_http_schemas.CartID"
                 },
                 "product_id": {
                     "type": "integer"
                 },
                 "trip_id": {
-                    "$ref": "#/definitions/schemas.TripID"
+                    "$ref": "#/definitions/ChaikaReports_internal_handler_http_schemas.TripID"
                 }
             }
         },
-        "schemas.DeleteItemFromCartResponse": {
+        "ChaikaReports_internal_handler_http_schemas.DeleteItemFromCartResponse": {
             "type": "object",
             "properties": {
                 "message": {
@@ -402,7 +479,7 @@ const docTemplate = `{
                 }
             }
         },
-        "schemas.EmployeeTrip": {
+        "ChaikaReports_internal_handler_http_schemas.EmployeeTrip": {
             "type": "object",
             "properties": {
                 "employee_id": {
@@ -412,11 +489,11 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "trip_id": {
-                    "$ref": "#/definitions/schemas.TripID"
+                    "$ref": "#/definitions/ChaikaReports_internal_handler_http_schemas.TripID"
                 }
             }
         },
-        "schemas.ErrorResponse": {
+        "ChaikaReports_internal_handler_http_schemas.ErrorResponse": {
             "type": "object",
             "properties": {
                 "error": {
@@ -424,18 +501,33 @@ const docTemplate = `{
                 }
             }
         },
-        "schemas.GetEmployeeCartsInTripResponse": {
+        "ChaikaReports_internal_handler_http_schemas.GetEmployeeCartsInTripPagedResponse": {
             "type": "object",
             "properties": {
                 "carts": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/schemas.Cart"
+                        "$ref": "#/definitions/ChaikaReports_internal_handler_http_schemas.Cart"
+                    }
+                },
+                "next_cursor": {
+                    "description": "\"\" means no more carts",
+                    "type": "string"
+                }
+            }
+        },
+        "ChaikaReports_internal_handler_http_schemas.GetEmployeeCartsInTripResponse": {
+            "type": "object",
+            "properties": {
+                "carts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ChaikaReports_internal_handler_http_schemas.Cart"
                     }
                 }
             }
         },
-        "schemas.GetEmployeeIDsByTripResponse": {
+        "ChaikaReports_internal_handler_http_schemas.GetEmployeeIDsByTripResponse": {
             "type": "object",
             "properties": {
                 "employee_ids": {
@@ -446,7 +538,7 @@ const docTemplate = `{
                 }
             }
         },
-        "schemas.GetEmployeeTripsResponse": {
+        "ChaikaReports_internal_handler_http_schemas.GetEmployeeTripsResponse": {
             "type": "object",
             "required": [
                 "employee_trips"
@@ -455,12 +547,12 @@ const docTemplate = `{
                 "employee_trips": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/schemas.EmployeeTrip"
+                        "$ref": "#/definitions/ChaikaReports_internal_handler_http_schemas.EmployeeTrip"
                     }
                 }
             }
         },
-        "schemas.InsertSalesRequest": {
+        "ChaikaReports_internal_handler_http_schemas.InsertSalesRequest": {
             "type": "object",
             "required": [
                 "carriage_id",
@@ -475,18 +567,18 @@ const docTemplate = `{
                 "carts": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/schemas.Cart"
+                        "$ref": "#/definitions/ChaikaReports_internal_handler_http_schemas.Cart"
                     }
                 },
                 "end_time": {
                     "type": "string"
                 },
                 "trip_id": {
-                    "$ref": "#/definitions/schemas.TripID"
+                    "$ref": "#/definitions/ChaikaReports_internal_handler_http_schemas.TripID"
                 }
             }
         },
-        "schemas.InsertSalesResponse": {
+        "ChaikaReports_internal_handler_http_schemas.InsertSalesResponse": {
             "type": "object",
             "properties": {
                 "message": {
@@ -494,7 +586,7 @@ const docTemplate = `{
                 }
             }
         },
-        "schemas.Item": {
+        "ChaikaReports_internal_handler_http_schemas.Item": {
             "type": "object",
             "required": [
                 "price",
@@ -515,7 +607,7 @@ const docTemplate = `{
                 }
             }
         },
-        "schemas.TripID": {
+        "ChaikaReports_internal_handler_http_schemas.TripID": {
             "type": "object",
             "required": [
                 "route_id",
@@ -534,7 +626,7 @@ const docTemplate = `{
                 }
             }
         },
-        "schemas.UpdateItemQuantityRequest": {
+        "ChaikaReports_internal_handler_http_schemas.UpdateItemQuantityRequest": {
             "type": "object",
             "required": [
                 "cart_id",
@@ -544,7 +636,7 @@ const docTemplate = `{
             ],
             "properties": {
                 "cart_id": {
-                    "$ref": "#/definitions/schemas.CartID"
+                    "$ref": "#/definitions/ChaikaReports_internal_handler_http_schemas.CartID"
                 },
                 "new_quantity": {
                     "type": "integer"
@@ -553,11 +645,11 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "trip_id": {
-                    "$ref": "#/definitions/schemas.TripID"
+                    "$ref": "#/definitions/ChaikaReports_internal_handler_http_schemas.TripID"
                 }
             }
         },
-        "schemas.UpdateItemQuantityResponse": {
+        "ChaikaReports_internal_handler_http_schemas.UpdateItemQuantityResponse": {
             "type": "object",
             "properties": {
                 "message": {
@@ -570,7 +662,7 @@ const docTemplate = `{
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "1.0.7",
+	Version:          "1.0.8",
 	Host:             "chaika-soft.ru",
 	BasePath:         "/api/v1/report",
 	Schemes:          []string{},

@@ -106,6 +106,40 @@ func DecodeGetEmployeeCartsInTripRequest(_ context.Context, r *http.Request) (in
 	return req, nil
 }
 
+func DecodeGetEmployeeCartsInTripPagedRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	query := r.URL.Query()
+	routeID := query.Get("route_id")
+	year := query.Get("year")
+	startTime := query.Get("start_time")
+	employeeID := query.Get("employee_id")
+
+	if routeID == "" || year == "" || startTime == "" || employeeID == "" {
+		return nil, errors.New("missing one or more required query parameters: route_id, year, start_time, employee_id")
+	}
+
+	limit := 10
+	if l := query.Get("limit"); l != "" {
+		n, err := strconv.Atoi(l)
+		if err != nil || n <= 0 {
+			return nil, errors.New("invalid limit (must be a positive integer)")
+		}
+		limit = n
+	}
+	cursor := query.Get("cursor")
+
+	req := schemas.GetEmployeeCartsInTripPagedRequest{
+		TripID: schemas.TripID{
+			RouteID:   routeID,
+			Year:      year,
+			StartTime: startTime,
+		},
+		EmployeeID: employeeID,
+		Limit:      limit,
+		Cursor:     cursor,
+	}
+	return req, nil
+}
+
 func DecodeGetEmployeeIDsByTripRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	query := r.URL.Query()
 	routeID := query.Get("route_id")

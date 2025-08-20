@@ -3,12 +3,13 @@ package cassandra
 import (
 	"ChaikaReports/internal/models"
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
-	"strconv"
-	"time"
-
 	"github.com/go-kit/log"
 	"github.com/gocql/gocql"
+	"strconv"
+	"time"
 )
 
 type SalesRepository struct {
@@ -72,6 +73,16 @@ const getEmployeeCartsInTripQuery = `SELECT operation_time, operation_type, prod
 	  AND year = ?
 	  AND start_time = ?
 	  AND employee_id = ?`
+
+const getEmployeeCartsInTripAfterCursorQuery = `
+SELECT operation_time, operation_type, product_id, quantity, price
+FROM operations
+WHERE route_id = ?
+  AND year = ?
+  AND start_time = ?
+  AND employee_id = ?
+  AND operation_time < ?
+`
 
 const getEmployeeIdsByTripQuery = `SELECT employee_id 
 	FROM operations 
@@ -267,6 +278,41 @@ func (r *SalesRepository) GetEmployeeCartsInTrip(ctx context.Context, tripID *mo
 	return carts, nil
 }
 
+// GetEmployeeCartsInTripPaged Gets paged carts an employee has sold during trip, returns array of Carts and a cursor for paging
+func (r *SalesRepository) GetEmployeeCartsInTripPaged(
+	ctx context.Context,
+	tripID *models.TripID,
+	employeeID string,
+	cartLimit int,
+	cursorB64 string,
+) ([]models.Cart, string, error) {
+
+	cur, err := decodeCursor(cursorB64)
+	if err != nil {
+		_ = r.log.Log("error", fmt.Sprintf("invalid cursor: %v", err))
+		return nil, "", fmt.Errorf("invalid cursor")
+	}
+
+	iter := r.selectCartsIter(ctx, tripID, employeeID, cur)
+	defer func() {
+		// If we returned early inside pager (on limit), iter.Close was called there.
+		// If we complete the scan, this Close here will run.
+	}()
+
+	p := newCartPager(iter, r.log, employeeID, cartLimit)
+
+	next, earlyErr := p.scanAll()
+	if earlyErr != nil {
+		return nil, "", earlyErr
+	}
+
+	if err := iter.Close(); err != nil {
+		_ = r.log.Log("error", fmt.Sprintf("iter.Close failed: %v", err))
+		return nil, "", err
+	}
+	return p.carts, next, nil
+}
+
 // GetEmployeeIDsByTrip Gets all employees by TripID (RouteID, StartTime)
 func (r *SalesRepository) GetEmployeeIDsByTrip(ctx context.Context, tripID *models.TripID) ([]string, error) {
 	iter := r.session.Query(getEmployeeIdsByTripQuery,
@@ -450,6 +496,142 @@ func aggregateCartsFromRows(iter Iter, employeeID string) ([]models.Cart, error)
 	return carts, nil
 }
 
+func (r *SalesRepository) selectCartsIter(
+	ctx context.Context,
+	tripID *models.TripID,
+	employeeID string,
+	cur *cartCursor,
+) Iter {
+	if cur == nil {
+		return r.session.Query(
+			getEmployeeCartsInTripQuery,
+			&tripID.RouteID, &tripID.Year, &tripID.StartTime, &employeeID,
+		).WithContext(ctx).Iter()
+	}
+	return r.session.Query(
+		getEmployeeCartsInTripAfterCursorQuery,
+		&tripID.RouteID, &tripID.Year, &tripID.StartTime, &employeeID,
+		&cur.LastOpTime,
+	).WithContext(ctx).Iter()
+}
+
+type cartPager struct {
+	iter       Iter
+	logger     log.Logger
+	employeeID string
+
+	limit     int
+	unlimited bool
+
+	// output
+	carts []models.Cart
+
+	// current cart under construction
+	curOpTime time.Time
+	curCart   *models.Cart
+	haveCart  bool
+
+	// scan row vars
+	opTime time.Time
+	opType int8
+	pid    int
+	qty    int16
+	price  int64
+}
+
+func newCartPager(iter Iter, logger log.Logger, employeeID string, cartLimit int) *cartPager {
+	p := &cartPager{
+		iter:       iter,
+		logger:     logger,
+		employeeID: employeeID,
+		limit:      cartLimit,
+		unlimited:  cartLimit <= 0,
+	}
+	if !p.unlimited {
+		capHint := cartLimit
+		if capHint > 1024 {
+			capHint = 1024
+		}
+		p.carts = make([]models.Cart, 0, capHint)
+	} else {
+		p.carts = make([]models.Cart, 0)
+	}
+	return p
+}
+
+func (p *cartPager) startCart(op time.Time, t int8) {
+	p.curOpTime = op
+	p.curCart = &models.Cart{
+		CartID: models.CartID{
+			EmployeeID:    p.employeeID,
+			OperationTime: op,
+		},
+		OperationType: t,
+		Items:         []models.Item{},
+	}
+	p.haveCart = true
+}
+
+func (p *cartPager) appendItem(pid int, qty int16, price int64) {
+	p.curCart.Items = append(p.curCart.Items, models.Item{
+		ProductID: pid,
+		Quantity:  qty,
+		Price:     price,
+	})
+}
+
+func (p *cartPager) emitAndMaybeReturn() (stop bool, next string, retErr error) {
+	p.carts = append(p.carts, *p.curCart)
+	if p.unlimited || len(p.carts) < p.limit {
+		return false, "", nil
+	}
+	nextCur := cartCursor{LastOpTime: p.curOpTime}
+	if err := p.iter.Close(); err != nil {
+		_ = p.logger.Log("error", fmt.Sprintf("iter.Close failed: %v", err))
+		return true, "", err
+	}
+	return true, encodeCursor(nextCur), nil
+}
+
+func (p *cartPager) handleBoundary() (stop bool, next string, err error) {
+	stop, next, err = p.emitAndMaybeReturn()
+	if stop || err != nil {
+		return stop, next, err
+	}
+	p.startCart(p.opTime, p.opType)
+	return false, "", nil
+}
+
+func (p *cartPager) scanLoop() (stop bool, next string, err error) {
+	for p.iter.Scan(&p.opTime, &p.opType, &p.pid, &p.qty, &p.price) {
+		if !p.haveCart {
+			p.startCart(p.opTime, p.opType)
+		} else if !p.opTime.Equal(p.curOpTime) {
+			stop, next, err = p.handleBoundary()
+			if stop || err != nil {
+				return stop, next, err
+			}
+		}
+		p.appendItem(p.pid, p.qty, p.price)
+	}
+	return false, "", nil
+}
+
+func (p *cartPager) finalize() {
+	if p.haveCart {
+		p.carts = append(p.carts, *p.curCart)
+	}
+}
+
+func (p *cartPager) scanAll() (next string, err error) {
+	stop, next, err := p.scanLoop()
+	if stop || err != nil {
+		return next, err
+	}
+	p.finalize()
+	return "", nil
+}
+
 func createCartKey(employeeID string, operationTime time.Time) string {
 	return fmt.Sprintf("%s-%s", employeeID, operationTime.Format(time.RFC3339))
 }
@@ -472,4 +654,28 @@ func createNewCart(cartID models.CartID, operationType int8, item models.Item) *
 		OperationType: operationType,
 		Items:         []models.Item{item},
 	}
+}
+
+type cartCursor struct {
+	LastOpTime time.Time `json:"t"`
+}
+
+func encodeCursor(c cartCursor) string {
+	b, _ := json.Marshal(c)
+	return base64.StdEncoding.EncodeToString(b)
+}
+
+func decodeCursor(b64 string) (*cartCursor, error) {
+	if b64 == "" {
+		return nil, nil
+	}
+	raw, err := base64.StdEncoding.DecodeString(b64)
+	if err != nil {
+		return nil, err
+	}
+	var c cartCursor
+	if err := json.Unmarshal(raw, &c); err != nil {
+		return nil, err
+	}
+	return &c, nil
 }

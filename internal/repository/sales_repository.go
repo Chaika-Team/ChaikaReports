@@ -16,6 +16,9 @@ type SalesRepository interface {
 	// GetEmployeeCartsInTrip Gets all carts employee has sold during trip, returns array of Carts
 	GetEmployeeCartsInTrip(ctx context.Context, tripID *models.TripID, employeeID *string) ([]models.Cart, error)
 
+	// GetEmployeeCartsInTripPaged Gets paged carts an employee has sold during trip, returns array of Carts and a cursor for paging
+	GetEmployeeCartsInTripPaged(ctx context.Context, tripID *models.TripID, employeeID string, cartLimit int, cursorB64 string) ([]models.Cart, string, error)
+
 	// GetEmployeeIDsByTrip Gets all employees in trip
 	GetEmployeeIDsByTrip(ctx context.Context, tripID *models.TripID) ([]string, error)
 
